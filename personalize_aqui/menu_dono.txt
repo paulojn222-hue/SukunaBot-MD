@@ -1,0 +1,38 @@
+╭─〔 💭 SUBDONOS 〕
+┃
+┃ 🔮◗ {PREFIXO}addsubdono
+┃ 🔮◗ {PREFIXO}rmsubdono
+┃ 🔮◗ {PREFIXO}lista_subdonos
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 💌 CONFIGURAÇÕES 〕
+┃
+┃ 🪻◗ {PREFIXO}rg_prefixo
+┃ 🪻◗ {PREFIXO}meulid
+┃ 🪻◗ {PREFIXO}grupoid
+┃ 🪻◗ {PREFIXO}setchat
+┃ 🪻◗ {PREFIXO}setchannel
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 💰 ALUGUÉIS 〕
+┃
+┃ 💧◗ {PREFIXO}aluguelglobal on/off
+┃ 💧◗ {PREFIXO}add_aluguel 1m/1h/1d
+┃ 💧◗ {PREFIXO}rmaluguel
+┃ 💧◗ {PREFIXO}alugueis
+┃ 💧◗ {PREFIXO}entrar
+┃ 💧◗ {PREFIXO}kitar
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🍹 PERSONALIZAÇÃO 〕
+┃
+┃ 🪻◗ {PREFIXO}setmenu (nome do menu)
+┃ 🪻◗ {PREFIXO}rm_midiamenu
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🌀 SEM PREFIXO 〕
+┃
+┃ 🔮◗ {PREFIXO}addcmdp
+┃ 🔮◗ {PREFIXO}rmcmdp
+┃ 🔮◗ {PREFIXO}listacmdp
+╰━━━━━━━━━━━━━━╯

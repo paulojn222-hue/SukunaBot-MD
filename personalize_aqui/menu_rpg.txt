@@ -1,0 +1,70 @@
+╭─〔 🪙 ECONOMIA 〕
+┃
+┃ 🔮◗ /saldo
+┃ 🔮◗ /investir <valor>
+┃ 🔮◗ /roubar @user
+┃ 🔮◗ /doar <valor> @user
+┃ 🔮◗ /pix <valor> @user
+┃ 🔮◗ /rankrpg
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 💼 TRABALHO 〕
+┃
+┃ 🪻◗ /minerar
+┃ 🪻◗ /pescar
+┃ 🪻◗ /trabalhar
+┃ 🪻◗ /vender <item>
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🎲 JOGOS 〕
+┃
+┃ 💧◗ /cassino <valor>
+┃ 💧◗ /loteria 1 2 3
+┃ 💧◗ /raspadinha
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🎒 INVENTÁRIO 〕
+┃
+┃ 🔮◗ /mochila
+┃ 🔮◗ /loja
+┃ 🔮◗ /comprar <item> <qtd>
+┃ 🔮◗ /equipar escudo
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🏦 BANCO 〕
+┃
+┃ 🪻◗ /emprestimo
+┃ 🪻◗ /banco <id> <valor>
+┃ 🪻◗ /saldobanco
+┃ 🪻◗ /mesada @user <valor>
+┃ 🪻◗ /presentear @user <item> <qtd>
+┃ 🪻◗ /sacar [valor]
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🐾 PETS 〕
+┃
+┃ 💧◗ /petshop
+┃ 💧◗ /buypet <id>
+┃ 💧◗ /statuspet
+┃ 💧◗ /nomearpet <nome>
+┃ 💧◗ /equiparpet <nome>
+┃ 💧◗ /soltarpet
+┃ 💧◗ /alimentarpet
+┃ 💧◗ /treinarpet 1/2/3
+┃ 💧◗ /batalharpet @user
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 💖 FAMÍLIA 〕
+┃
+┃ 🪻◗ /casar @user
+┃ 🪻◗ /aceitarcasar
+┃ 🪻◗ /recusarcasar
+┃ 🪻◗ /divorciar
+┃ 🪻◗ /adotar @user
+┃ 🪻◗ /aceitaradocao
+┃ 🪻◗ /recusaradocao
+┃ 🪻◗ /expulsarfilho @user
+┃ 🪻◗ /meusfilhos
+┃ 🪻◗ /minhafamilia
+┃ 🪻◗ /arvoregenealogica
+╰━━━━━━━━━━━━━━╯

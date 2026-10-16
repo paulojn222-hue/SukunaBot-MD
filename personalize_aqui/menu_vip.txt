@@ -1,0 +1,28 @@
+╭─〔 💎 SISTEMA VIP 〕
+┃
+┃ 🔮◗ {PREFIXO}listavip
+┃ 🔮◗ {PREFIXO}vip
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🌎 CONSULTAS 〕
+┃
+┃ 🪻◗ {PREFIXO}info_ddd
+┃ 🪻◗ {PREFIXO}info_ddi
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 📝 ANOTAÇÕES 〕
+┃
+┃ 💧◗ {PREFIXO}anotar
+┃ 💧◗ {PREFIXO}anotações
+┃ 💧◗ {PREFIXO}rm_anotação <id>
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🌀 SISTEMA DE AURA 〕
+┃
+┃ 🔮◗ {PREFIXO}aura
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🎂 IDADE 〕
+┃
+┃ 🪻◗ {PREFIXO}idade <dia/mês/ano>
+╰━━━━━━━━━━━━━━╯

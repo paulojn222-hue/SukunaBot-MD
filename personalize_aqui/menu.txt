@@ -1,0 +1,41 @@
+꒰──────୬🪻᥀──────୬
+┃🔮◗ *Bot:* {BOT}
+┃🔮◗ *Usuário:* {USER}
+┃🔮◗ *Prefixo:* {PREFIXO}
+┃🔮◗ *Dono:* {DONO}
+┃🔮◗ *Data:* {DATA}
+┃🔮◗ *Horário:* {HORA}
+┃🔮◗ *Comandos:* {TOTAL}
+꒰──────୬🪻᥀──────୬
+
+╭─〔 🔮 *MENUS* 🔮〕
+᥀·࣭࣪̇˖🍹◗{PREFIXO}menuadm
+᥀·࣭࣪̇˖🍹◗{PREFIXO}menubaixar
+᥀·࣭࣪̇˖🍹◗{PREFIXO}menudono
+᥀·࣭࣪̇˖🍹◗{PREFIXO}menufig
+᥀·࣭࣪̇˖🍹◗{PREFIXO}menugame
+᥀·࣭࣪̇˖🍹◗{PREFIXO}menuvip
+╰━━━━━━━━━━━━━╯
+
+╭─〔 🔮*MEMBROS* 〕
+᥀·࣭࣪̇˖💧◗{PREFIXO}chat
+᥀·࣭࣪̇˖💧◗{PREFIXO}adms
+᥀·࣭࣪̇˖💧◗{PREFIXO}middle
+᥀·࣭࣪̇˖💧◗{PREFIXO}alugar
+᥀·࣭࣪̇˖💧◗{PREFIXO}ping
+᥀·࣭࣪̇˖💧◗{PREFIXO}infobot
+᥀·࣭࣪̇˖💧◗{PREFIXO}perfil
+᥀·࣭࣪̇˖💧◗{PREFIXO}dono
+᥀·࣭࣪̇˖💧◗{PREFIXO}criador
+╰━━━━━━━━━━━━━━━╯
+
+╭─〔 🔍 *INFO* 〕
+⏤͟͟͞͞🎋{PREFIXO}traduzir
+⏤͟͟͞͞🎋{PREFIXO}cantadas
+⏤͟͟͞͞🎋{PREFIXO}fatos
+⏤͟͟͞͞🎋{PREFIXO}moedas
+⏤͟͟͞͞🎋{PREFIXO}contar_letras
+⏤͟͟͞͞🎋{PREFIXO}calcular
+⏤͟͟͞͞🎋{PREFIXO}versiculo
+⏤͟͟͞͞🎋{PREFIXO}gpt
+╰━━━━━━━━━━╯

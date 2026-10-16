@@ -1,0 +1,67 @@
+╭─〔 🔮 MODERAÇÃO 〕
+┃
+┃ 🪻◗ /ban @user
+┃ 🪻◗ /promover @user
+┃ 🪻◗ /rebaixar @user
+┃ 🪻◗ /mute @user
+┃ 🪻◗ /unmute @user
+┃ 🪻◗ /adv @user
+┃ 🪻◗ /veradv @user
+┃ 🪻◗ /rmadv @user
+┃ 🪻◗ /zeraradv @user
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🪻 GERENCIAMENTO DO GRUPO 〕
+┃
+┃ 💧◗ /modorpg
+┃ 💧◗ /abrir
+┃ 💧◗ /fechar
+┃ 💧◗ /fechargp 00:00
+┃ 💧◗ /abrirgp 00:00
+┃ 💧◗ /legendafechar
+┃ 💧◗ /legendaabrir
+┃ 💧◗ /foto_fechar
+┃ 💧◗ /foto_abrir
+┃ 💧◗ /setnomegp nome
+┃ 💧◗ /set_descricao texto
+┃ 💧◗ /infogrupo
+┃ 💧◗ /link
+┃ 💧◗ /resetlink
+┃ 💧◗ /somente_adm
+┃ 💧◗ /totag [mensagem]
+┃ 💧◗ /r (apagar mensagem)
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🛡️ SISTEMA DE PROTEÇÃO 〕
+┃
+┃ 🧧◗ /Antiimg on/off
+┃ 🧧◗ /Antifig on/off
+┃ 🧧◗ /Antiaudio on/off
+┃ 🧧◗ /Antivideo on/off
+┃ 🧧◗ /Antilink on/off
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🔗 PARCERIAS 〕
+┃
+┃ 🍹◗ /Modo parceria on/off
+┃ 🍹◗ /Addparceria @user /quantia
+┃ 🍹◗ /Delparceria @user
+┃ 🍹◗ /Lista_parceria
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🚫 LISTA NEGRA 〕
+┃
+┃ ⛔◗ /add_listanegra @user
+┃ ⛔◗ /rm_listanegra id
+┃ ⛔◗ /listanegra
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🪻 BEM-VINDO / SAÍDA 〕
+┃
+┃ 🀄◗ /ativar_bemvindo
+┃ 🀄◗ /desativar_bemvindo
+┃ 🀄◗ /textobemvindo msg
+┃ 🀄◗ /midiabemvindo
+┃ 🀄◗ /textosaiu msg
+┃ 🀄◗ /midiasaiu
+╰━━━━━━━━━━━━━━╯

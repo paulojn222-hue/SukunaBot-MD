@@ -1,0 +1,29 @@
+╭─〔 🎵 MÚSICAS E VÍDEOS 〕
+┃
+┃ 🔮◗ {PREFIXO}play
+┃ 🔮◗ {PREFIXO}playmp4
+┃ 🔮◗ {PREFIXO}letra
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🎧 PLAYLIST
+┃
+┃ 🎶◗ {PREFIXO}addplaylist
+┃ 🎶◗ {PREFIXO}rmplaylist
+┃ 🎶◗ {PREFIXO}playlist
+┃ 🎶◗ {PREFIXO}tocarplaylist
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 📲 REDES SOCIAIS 〕
+┃
+┃ 🪻◗ {PREFIXO}tiktok_video
+┃ 🪻◗ {PREFIXO}tiktok_audio
+┃ 🪻◗ {PREFIXO}instagram
+┃ 🪻◗ {PREFIXO}face_video
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🔍 PESQUISAS E NOTÍCIAS 〕
+┃
+┃ 💧◗ {PREFIXO}pesquisa_yt
+┃ 💧◗ {PREFIXO}signo
+┃ 💧◗ {PREFIXO}esportenoticias
+╰━━━━━━━━━━━━━━╯
