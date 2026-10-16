@@ -177,6 +177,30 @@ module.exports = {
             }
           }
 
+// 5. Se algum arquivo baixado for package.json, roda npm install
+const baixouPackage = (remoto.arquivos || []).some(a => a.destino === "package.json");
+
+if (baixouPackage) {
+  await sock.sendMessage(idChat, {
+    text: "📦 *Atualizando dependências...*\n\n> Isso pode demorar um pouco..."
+  });
+
+  const { execSync } = require("child_process");
+  try {
+    execSync("npm install", {
+      cwd: path.join(__dirname, ".."),
+      stdio: "inherit",
+      timeout: 300000 // 5 minutos
+    });
+    console.log("✅ npm install concluído");
+  } catch (e) {
+    console.log("❌ Erro no npm install:", e.message);
+    await sock.sendMessage(idChat, {
+      text: `⚠️ Erro ao instalar dependências:\n\n> ${e.message}`
+    });
+  }
+}
+
           // 5. Atualiza a versão no config.js
           const atualizouConfig = atualizarVersaoConfig(versaoRemota);
 

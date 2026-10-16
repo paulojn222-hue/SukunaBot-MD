@@ -2,8 +2,15 @@ module.exports = {
   PREFIXO: "!",
   NOME_BOT: "HoshinoBot-MD v2",
   DONO_PRINCIPAL_NOME: "Moon",
-  DONO_PRINCIPAL_NUMERO: "TEU_NÚMERO",
+  DONO_PRINCIPAL_NUMERO: "5563975965071",
   DONO_PRINCIPAL_LID: "199665127579694",
   API_KEY_BRONXYS: "SUA_KEY",
-  VERSAO: "1.0.5"
+
+  // 🔑 LICENÇA (a chave que você gerou no painel)
+  LICENCA: "SUA_KEY_AQUI",
+
+  // 📱 Número do bot (pra validar qual aparelho tá rodando)
+  NUMERO_BOT: "SEU_NÚMERO",
+
+  VERSAO: "1.0.6"
 };
