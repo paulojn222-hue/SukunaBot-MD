@@ -1,0 +1,17 @@
+{
+  "name": "hoshinobot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "axios": "^1.7.0",
+    "adm-zip": "^0.5.16",
+    "qrcode-terminal": "^0.12.0",
+    "pino": "^9.0.0",
+    "jimp": "^1.6.0",
+    "javascript-obfuscator": "^4.1.0"
+  }
+}
