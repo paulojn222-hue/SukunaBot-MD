@@ -1,0 +1,11 @@
+{
+  "keys": [
+    {
+      "key": "HOSHINO-AAAA-BBBB-CCCC",
+      "cliente": "Cliente Teste",
+      "criada": "2026-10-16",
+      "expira": "2027-10-16",
+      "ativo": true
+    }
+  ]
+}
