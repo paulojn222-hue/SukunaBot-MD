@@ -7,10 +7,10 @@ module.exports = {
   API_KEY_BRONXYS: "SUA_KEY",
 
   // 🔑 LICENÇA (a chave que você gerou no painel)
-  LICENCA: "SUA_KEY_AQUI",
+  LICENCA: "MEUBOT-9E809A0D-94A6A2BE-F4C268A8",
 
   // 📱 Número do bot (pra validar qual aparelho tá rodando)
-  NUMERO_BOT: "SEU_NÚMERO",
+  NUMERO_BOT: "559391595706",
 
-  VERSAO: "1.0.7"
+  VERSAO: "1.0.9"
 };
