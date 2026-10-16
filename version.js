@@ -1,6 +1,6 @@
 module.exports = {
-  versao: "1.0.1",
-  mensagem: "🎉 Atualizei o comando !ping",
+  versao: "1.0.2",
+  mensagem: "🎉 comando !ping atualizado",
   data: "2026-10-16",
   arquivos: [
     {
