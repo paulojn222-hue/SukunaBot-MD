@@ -12,6 +12,7 @@
 ┃ 🪻◗ {PREFIXO}grupoid
 ┃ 🪻◗ {PREFIXO}setchat
 ┃ 🪻◗ {PREFIXO}setchannel
+┃ 🪻◗ {PREFIXO}reiniciar
 ╰━━━━━━━━━━━━━━╯
 
 ╭─〔 💰 ALUGUÉIS 〕

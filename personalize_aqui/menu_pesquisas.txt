@@ -23,6 +23,7 @@
 
 ╭─〔 🔍 PESQUISAS E NOTÍCIAS 〕
 ┃
+┃  🪻 {PREFIXO}pinterest2 <pesquisa>
 ┃ 💧◗ {PREFIXO}pesquisa_yt
 ┃ 💧◗ {PREFIXO}signo
 ┃ 💧◗ {PREFIXO}esportenoticias

@@ -4,6 +4,13 @@
 ┃ 🔮◗ {PREFIXO}vip
 ╰━━━━━━━━━━━━━━╯
 
+╭─〔 🤖 IA E CONSULTAS 〕
+┃🪻 {PREFIXO}axis <pergunta>
+┃🪻 {PREFIXO}cep 01310930
+┃🪻 {PREFIXO}sora <descrição>
+┃🪻 {PREFIXO}g1
+╰━━━━━━━━━━━━━━╯
+
 ╭─〔 🌎 CONSULTAS 〕
 ┃
 ┃ 🪻◗ {PREFIXO}info_ddd
