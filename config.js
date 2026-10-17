@@ -12,5 +12,5 @@ module.exports = {
   // 📱 Número do bot (pra validar qual aparelho tá rodando)
   NUMERO_BOT: "559391595706",
 
-  VERSAO: "1.1.1"
+  VERSAO: "1.2.0"
 };
