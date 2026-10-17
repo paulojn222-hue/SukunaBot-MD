@@ -1,6 +1,6 @@
-kmodule.exports = {
-  versao: "1.1.0",
-  mensagem: "🎮 RPG por grupo + admins podem ativar",
+module.exports = {
+  versao: "1.1.1",
+  mensagem: "🎮 Correção: RPG por grupo funcionando 100%",
   data: "2026-10-17",
   arquivos: [
     {
