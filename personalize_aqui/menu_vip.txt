@@ -1,0 +1,35 @@
+╭─〔 💎 SISTEMA VIP 〕
+┃
+┃ 🔮◗ {PREFIXO}listavip
+┃ 🔮◗ {PREFIXO}vip
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🤖 IA E CONSULTAS 〕
+┃🪻 {PREFIXO}axis <pergunta>
+┃🪻 {PREFIXO}cep 01310930
+┃🪻 {PREFIXO}sora <descrição>
+┃🪻 {PREFIXO}g1
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🌎 CONSULTAS 〕
+┃
+┃ 🪻◗ {PREFIXO}info_ddd
+┃ 🪻◗ {PREFIXO}info_ddi
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 📝 ANOTAÇÕES 〕
+┃
+┃ 💧◗ {PREFIXO}anotar
+┃ 💧◗ {PREFIXO}anotações
+┃ 💧◗ {PREFIXO}rm_anotação <id>
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🌀 SISTEMA DE AURA 〕
+┃
+┃ 🔮◗ {PREFIXO}aura
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🎂 IDADE 〕
+┃
+┃ 🪻◗ {PREFIXO}idade <dia/mês/ano>
+╰━━━━━━━━━━━━━━╯

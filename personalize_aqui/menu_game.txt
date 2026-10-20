@@ -1,0 +1,20 @@
+╭─〔 🎲 JOGOS RÁPIDOS 〕
+┃
+┃ 🔮◗ {PREFIXO}ppt pedra/papel/tesoura
+┃ 🔮◗ {PREFIXO}pais
+┃ 🔮◗ {PREFIXO}quiz
+┃ 🔮◗ {PREFIXO}quemsoueu
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 🔤 DESAFIOS DE PALAVRAS 〕
+┃
+┃ 🪻◗ {PREFIXO}forca
+┃ 🪻◗ {PREFIXO}adedonha
+┃ 🪻◗ {PREFIXO}cacapalavras <palavra>
+╰━━━━━━━━━━━━━━╯
+
+╭─〔 ♟️ JOGOS DE TABULEIRO 〕
+┃
+┃ 💜◗ {PREFIXO}velha <l> <c>
+┃ 💜◗ {PREFIXO}conecta4 <coluna>
+╰━━━━━━━━━━━━━━╯

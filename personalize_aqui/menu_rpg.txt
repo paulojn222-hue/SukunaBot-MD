@@ -1,0 +1,82 @@
+╭━━━〔 🎮 *MENU RPG* 🎮 〕━━━╮
+┃
+┃ 👤 *Jogador:* {USER}
+┃ 💰 *Prefix:* {PREFIXO}
+┃
+┣━━━〔 📊 *STATUS E RANKS* 〕━━━╮
+┃ 🪻 {PREFIXO}saldo
+┃ 🪻 {PREFIXO}titulorpg
+┃ 🪻 {PREFIXO}conquistas
+┃ 🪻 {PREFIXO}ranknivel
+┃ 🪻 {PREFIXO}rankmonstros
+┃ 🪻 {PREFIXO}rankriqueza
+┃ 🪻 {PREFIXO}rankrpg
+┃
+┣━━━〔 💰 *ECONOMIA* 〕━━━╮
+┃ 🪻 {PREFIXO}investir <valor>
+┃ 🪻 {PREFIXO}doar <valor> @user
+┃ 🪻 {PREFIXO}pix <valor> @user
+┃ 🪻 {PREFIXO}roubar @user
+┃
+┣━━━〔 💼 *TRABALHO* 〕━━━╮
+┃ ⛏️  {PREFIXO}minerar
+┃ 🎣 {PREFIXO}pescar
+┃ 💼 {PREFIXO}job
+┃ 💎 {PREFIXO}vender <item>
+┃
+┣━━━〔 🎲 *JOGOS* 〕━━━╮
+┃ 🎰 {PREFIXO}cassino <valor>
+┃ 🎟️  {PREFIXO}loteria 1 2 3
+┃ 🎫 {PREFIXO}raspadinha
+┃ ⚔️  {PREFIXO}cacar
+┃
+┣━━━〔 🎒 *INVENTÁRIO* 〕━━━╮
+┃ 🎒 {PREFIXO}mochila
+┃ 🛒 {PREFIXO}loja
+┃ 🛍️ {PREFIXO}comprar <item> <qtd>
+┃ 🛡️ {PREFIXO}equipar escudo
+┃
+┣━━━〔 🏦 *BANCO* 〕━━━╮
+┃ 🏦 {PREFIXO}banco <id> <valor>
+┃ 📊 {PREFIXO}saldobanco
+┃ 💸 {PREFIXO}sacar [valor]
+┃
+┣━━━〔 🐾 *PETS* 〕━━━╮
+┃ 🐾 {PREFIXO}petshop
+┃ 🛍️ {PREFIXO}buypet <id>
+┃ 📊 {PREFIXO}statuspet
+┃ ✏️ {PREFIXO}nomearpet <nome>
+┃ 👋 {PREFIXO}soltarpet
+┃ 🍖 {PREFIXO}alimentarpet
+┃ 💪 {PREFIXO}treinarpet 1/2/3
+┃ ⚔️ {PREFIXO}batalharpet @user
+┃
+┣━━━〔 💍 *CASAMENTO* 〕━━━╮
+┃ 💍 {PREFIXO}casar @user
+┃ ✅ {PREFIXO}aceitarcasar
+┃ ❌ {PREFIXO}recusarcasar
+┃ 💔 {PREFIXO}divorciar
+┃
+┣━━━〔 👨‍👩‍👧 *FAMÍLIA* 〕━━━╮
+┃ 👨‍👩‍👧 {PREFIXO}adotar @user
+┃ ✅ {PREFIXO}aceitaradocao
+┃ ❌ {PREFIXO}recusaradocao
+┃ 👋 {PREFIXO}expulsarfilho @user
+┃ 👶 {PREFIXO}meusfilhos
+┃ 🏠 {PREFIXO}minhafamilia
+┃ 🌳 {PREFIXO}arvoregenealogica
+┃
+┣━━━〔 💵 *MESADA E PRESENTES* 〕━━━╮
+┃ 💵 {PREFIXO}mesada @user <valor>
+┃ 🎁 {PREFIXO}presentear @user <item> <qtd>
+┃
+┣━━━〔 🏡 *JARDINAGEM* 〕━━━╮
+┃ 🪴 {PREFIXO}jardin
+┃ 🏗️ {PREFIXO}melhorar_jardin
+┃ 🌱 {PREFIXO}loja_semente
+┃ 🧪 {PREFIXO}comprar_inseticida
+┃ 💧 {PREFIXO}inseticida <nome>
+┃ 🌱 {PREFIXO}plantar <nome>
+┃ 💰 {PREFIXO}vender_planta <nome>
+┃ 🎁 {PREFIXO}doar_planta @user <nome>
+╰━━━━━━━━━━━━━━━━━━━━━╯
