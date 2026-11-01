@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
+const { execSync } = require("child_process");
 
 const config = require("../config.js");
 
@@ -48,45 +49,6 @@ function compararVersoes(v1, v2) {
   return 0; // iguais
 }
 
-async function baixarArquivo(url, destino) {
-  try {
-    const r = await axios.get(url, {
-      responseType: "arraybuffer",
-      timeout: 30000,
-      headers: { "User-Agent": "Mozilla/5.0" }
-    });
-
-    // Garante que a pasta existe
-    fs.mkdirSync(path.dirname(destino), { recursive: true });
-
-    // Faz backup antes de sobrescrever
-    if (fs.existsSync(destino)) {
-      const backup = destino + ".bak";
-      fs.copyFileSync(destino, backup);
-    }
-
-    fs.writeFileSync(destino, r.data);
-
-    // Remove backup
-    if (fs.existsSync(destino + ".bak")) {
-      fs.unlinkSync(destino + ".bak");
-    }
-
-    return true;
-  } catch (e) {
-    console.log(`Erro baixando ${url}:`, e.message);
-
-    // Restaura backup se falhou
-    if (fs.existsSync(destino + ".bak")) {
-      try {
-        fs.copyFileSync(destino + ".bak", destino);
-        fs.unlinkSync(destino + ".bak");
-      } catch {}
-    }
-    return false;
-  }
-}
-
 function atualizarVersaoConfig(novaVersao) {
   const ARQ = path.join(__dirname, "..", "config.js");
   try {
@@ -107,11 +69,14 @@ function atualizarVersaoConfig(novaVersao) {
   }
 }
 
+// ==============================================
+// 📥 COMANDO ATUALIZAR
+// ==============================================
 module.exports = {
   comandos: [
     {
       nome: "atualizar",
-      descricao: "Verifica e aplica atualizações do bot",
+      descricao: "Verifica e aplica atualizações do bot via ZIP",
       async executar({ sock, idChat }) {
         await sock.sendMessage(idChat, {
           text: "🔄 *VERIFICANDO ATUALIZAÇÕES...*\n\n> Consultando o GitHub..."
@@ -145,7 +110,12 @@ module.exports = {
 
           // 3. Tem atualização!
           const msg = remoto.mensagem || "Nova versão disponível!";
-          const qtdArquivos = (remoto.arquivos || []).length;
+
+          if (!remoto.urlZip) {
+            return sock.sendMessage(idChat, {
+              text: "❌ *Erro de configuração:* O `version.js` não contém a variável `urlZip` com o link do ZIP."
+            });
+          }
 
           await sock.sendMessage(idChat, {
             text:
@@ -154,77 +124,63 @@ module.exports = {
               `> 🌐 Nova versão: *${versaoRemota}*\n` +
               `> 📅 ${remoto.data || "Data não informada"}\n\n` +
               `> 📝 *Mensagem:*\n> _${msg}_\n\n` +
-              `> 📦 Arquivos para atualizar: *${qtdArquivos}*\n` +
-              `> ⏳ Baixando...`
+              `> ⏳ Baixando pacote de atualização...`
           });
 
-          // 4. Baixa cada arquivo
-          let sucesso = 0;
-          let falha = 0;
+          // 4. Baixa o ZIP
+          const caminhoRaiz = path.join(__dirname, "..");
+          const tmpZip = path.join(caminhoRaiz, "temp_update.zip");
 
-          for (const arq of (remoto.arquivos || [])) {
-            if (!arq.url || !arq.destino) continue;
+          const r = await axios.get(remoto.urlZip, {
+            responseType: "arraybuffer",
+            timeout: 60000,
+            headers: { "User-Agent": "Mozilla/5.0" }
+          });
 
-            const destino = path.join(__dirname, "..", arq.destino);
-            const ok = await baixarArquivo(arq.url, destino);
+          fs.writeFileSync(tmpZip, r.data);
 
-            if (ok) {
-              sucesso++;
-              console.log(`✅ Baixado: ${arq.destino}`);
-            } else {
-              falha++;
-              console.log(`❌ Falhou: ${arq.destino}`);
-            }
+          // 5. Extrai o ZIP
+          await sock.sendMessage(idChat, {
+            text: "📦 *Extraindo arquivos...*\n\n> Isso pode demorar um pouco."
+          });
+
+          try {
+            // Verifica se o unzip está instalado
+            execSync("unzip -v", { stdio: "ignore" });
+          } catch (e) {
+            throw new Error("O comando 'unzip' não está instalado no Termux. Peça para o cliente rodar: pkg install unzip");
           }
 
-// 5. Se algum arquivo baixado for package.json, roda npm install
-const baixouPackage = (remoto.arquivos || []).some(a => a.destino === "package.json");
+          // Extrai sobrescrevendo os arquivos antigos (-o)
+          // O destino é a raiz do bot
+          execSync(`unzip -o "${tmpZip}" -d "${caminhoRaiz}"`, { stdio: 'inherit' });
 
-if (baixouPackage) {
-  await sock.sendMessage(idChat, {
-    text: "📦 *Atualizando dependências...*\n\n> Isso pode demorar um pouco..."
-  });
+          // 6. Remove o ZIP temporário
+          fs.unlinkSync(tmpZip);
 
-  const { execSync } = require("child_process");
-  try {
-    execSync("npm install", {
-      cwd: path.join(__dirname, ".."),
-      stdio: "inherit",
-      timeout: 300000 // 5 minutos
-    });
-    console.log("✅ npm install concluído");
-  } catch (e) {
-    console.log("❌ Erro no npm install:", e.message);
-    await sock.sendMessage(idChat, {
-      text: `⚠️ Erro ao instalar dependências:\n\n> ${e.message}`
-    });
-  }
-}
-
-          // 5. Atualiza a versão no config.js
+          // 7. Atualiza a versão no config.js
           const atualizouConfig = atualizarVersaoConfig(versaoRemota);
 
-          // 6. Avisa e reinicia
+          // 8. Avisa e reinicia
           await sock.sendMessage(idChat, {
             text:
               `✅ *ATUALIZAÇÃO CONCLUÍDA!*\n\n` +
-              `> 📦 Baixados: *${sucesso}*${falha > 0 ? ` | ❌ Falhas: *${falha}*` : ""}\n` +
               `> 🔖 Nova versão: *${versaoRemota}*\n` +
               `> ⚙️ Config atualizado: *${atualizouConfig ? "✅" : "❌"}*\n` +
               `> 🔄 Reiniciando em *5 segundos*...\n\n` +
-              `> 💡 Pastas protegidas:\n` +
-              `> • auth, dados, personalize_aqui, node_modules`
+              `> 💡 Seus dados foram preservados:\n` +
+              `> • auth, dados, personalize_aqui, config.js`
           });
 
           setTimeout(() => {
-            console.log("🔄 Reiniciando após atualização...");
+            console.log("🔄 Reiniciando após atualização via ZIP...");
             process.exit(0);
           }, 5000);
 
         } catch (e) {
           console.log("Erro ao atualizar:", e.message);
           await sock.sendMessage(idChat, {
-            text: `❌ *Erro:* ${e.message}`
+            text: `❌ *Erro na atualização:*\n\n> ${e.message}`
           });
         }
       }
