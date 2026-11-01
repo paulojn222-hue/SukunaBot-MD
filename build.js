@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const JavaScriptObfuscator = require("javascript-obfuscator");
+const { execSync } = require("child_process");
 
 // ==============================================
 // 🔧 CONFIGURAÇÃO
@@ -190,8 +191,35 @@ for (const item of COPIAR) {
 
 console.log("\n🎉 Build concluído!");
 console.log("📂 Arquivos em:", PASTA_DIST);
-console.log("\n💡 Próximo passo:");
-console.log("   cd ~/hoshino-novo");
-console.log("   git add .");
-console.log('   git commit -m "atualização"');
-console.log("   git push origin HEAD:main");
+
+// ==============================================
+// 📦 CRIAR O ZIP PARA O CLIENTE
+// ==============================================
+const nomeZip = "hoshino-atualizacao.zip";
+const caminhoZip = path.join(__dirname, "..", nomeZip);
+
+try {
+  // Remove ZIP antigo se existir
+  if (fs.existsSync(caminhoZip)) fs.unlinkSync(caminhoZip);
+  
+  // Verifica se o comando zip está instalado
+  try {
+    execSync("zip -v", { stdio: "ignore" });
+  } catch (e) {
+    throw new Error("O comando 'zip' não está instalado no seu Termux. Rode: pkg install zip");
+  }
+
+  // Cria o ZIP da pasta dist (hoshino-novo)
+  // -r: recursivo, -q: quieto, -9: compressão máxima
+  execSync(`cd "${PASTA_DIST}" && zip -r -q -9 "${caminhoZip}" .`, { stdio: 'inherit' });
+  
+  console.log(`\n📦 ZIP criado com sucesso: ${nomeZip}`);
+  console.log(`📍 Local: ${caminhoZip}`);
+} catch (e) {
+  console.log(`\n⚠️ Erro ao criar ZIP: ${e.message}`);
+}
+
+console.log("\n💡 Próximos passos:");
+console.log("   1. Mova o ZIP para a pasta 'downloads' do seu repositório no GitHub");
+console.log("   2. Faça o commit e push do ZIP e do version.js");
+console.log("   3. Avise seus clientes para usarem !atualizar");

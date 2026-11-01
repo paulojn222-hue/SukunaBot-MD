@@ -1,39 +1,32 @@
-╭─〔 💭 SUBDONOS 〕
-┃
-┃ 🔮◗ {PREFIXO}addsubdono
-┃ 🔮◗ {PREFIXO}rmsubdono
-┃ 🔮◗ {PREFIXO}lista_subdonos
-╰━━━━━━━━━━━━━━╯
+───ೋღ *❄️ MENU DONO ❄️ ღೋ───
 
-╭─〔 💌 CONFIGURAÇÕES 〕
-┃
-┃ 🪻◗ {PREFIXO}rg_prefixo
-┃ 🪻◗ {PREFIXO}meulid
-┃ 🪻◗ {PREFIXO}grupoid
-┃ 🪻◗ {PREFIXO}setchat
-┃ 🪻◗ {PREFIXO}setchannel
-┃ 🪻◗ {PREFIXO}reiniciar
-╰━━━━━━━━━━━━━━╯
+»»———— 💌 *CONFIGURAÇÕES* ————««
+┆▒⃝꙰🍹!rg_prefixo
+┆▒⃝꙰🍹!meulid
+┆▒⃝꙰🍹!setchat
+┆▒⃝꙰🍹!setchannel
+┆▒⃝꙰🍹!grupoid
+┆▒⃝꙰🍹!uptime
+┆▒⃝꙰🍹!view on/off
+┆▒⃝꙰🍹!broadcast
 
-╭─〔 💰 ALUGUÉIS 〕
-┃
-┃ 💧◗ {PREFIXO}aluguelglobal on/off
-┃ 💧◗ {PREFIXO}add_aluguel 1m/1h/1d
-┃ 💧◗ {PREFIXO}rmaluguel
-┃ 💧◗ {PREFIXO}alugueis
-┃ 💧◗ {PREFIXO}entrar
-┃ 💧◗ {PREFIXO}kitar
-╰━━━━━━━━━━━━━━╯
+»»———— ❄️ *ALUGUÉIS* ————««
+┆▒⃝꙰💧!aluguelglobal on/off
+┆▒⃝꙰💧!add_aluguel
+┆▒⃝꙰💧!rmaluguel
+┆▒⃝꙰💧!alugueis
+┆▒⃝꙰💧!entrar
+┆▒⃝꙰💧!kitar
+┆▒⃝꙰💧!viewaluguel
 
-╭─〔 🍹 PERSONALIZAÇÃO 〕
-┃
-┃ 🪻◗ {PREFIXO}setmenu (nome do menu)
-┃ 🪻◗ {PREFIXO}rm_midiamenu
-╰━━━━━━━━━━━━━━╯
+»»———— 🍹 *PERSONALIZAÇÃO* ————««
+┆▒⃝꙰🎁!midia_menu
+┆▒⃝꙰🎁!rm_midiamenu
+┆▒⃝꙰🎁!foto_erro
 
-╭─〔 🌀 SEM PREFIXO 〕
-┃
-┃ 🔮◗ {PREFIXO}addcmdp
-┃ 🔮◗ {PREFIXO}rmcmdp
-┃ 🔮◗ {PREFIXO}listacmdp
-╰━━━━━━━━━━━━━━╯
+»»———— 🛡 *SUBDONOS* ————««
+┆▒⃝꙰✨️!subdono
+┆▒⃝꙰✨️!rmsub
+┆▒⃝꙰✨️!subdonos
+
+╞═════𖠁✨️𖠁═════╡

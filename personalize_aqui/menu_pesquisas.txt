@@ -1,30 +1,18 @@
-╭─〔 🎵 MÚSICAS E VÍDEOS 〕
-┃
-┃ 🔮◗ {PREFIXO}play
-┃ 🔮◗ {PREFIXO}playmp4
-┃ 🔮◗ {PREFIXO}letra
-╰━━━━━━━━━━━━━━╯
+»»————🎵 *DOWNLOADS*🎵————««
+•.̇𖥨֗🎧⭟ !ytmp3
+•.̇𖥨֗🎧⭟ !ytmp4
+•.̇𖥨֗🎧⭟ !play
+•.̇𖥨֗🎧⭟ !playvd
+•.̇𖥨֗🎧⭟ !tiktok
+•.̇𖥨֗🎧⭟ !tiktokaudio
+•.̇𖥨֗🎧⭟ !insta
+•.̇𖥨֗🎧⭟ !face
+•.̇𖥨֗🎧⭟ !pinterest
+•.̇𖥨֗🎧⭟ !ytpesquisa
 
-╭─〔 🎧 PLAYLIST
-┃
-┃ 🎶◗ {PREFIXO}addplaylist
-┃ 🎶◗ {PREFIXO}rmplaylist
-┃ 🎶◗ {PREFIXO}playlist
-┃ 🎶◗ {PREFIXO}tocarplaylist
-╰━━━━━━━━━━━━━━╯
-
-╭─〔 📲 REDES SOCIAIS 〕
-┃
-┃ 🪻◗ {PREFIXO}tiktok_video
-┃ 🪻◗ {PREFIXO}tiktok_audio
-┃ 🪻◗ {PREFIXO}instagram
-┃ 🪻◗ {PREFIXO}face_video
-╰━━━━━━━━━━━━━━╯
-
-╭─〔 🔍 PESQUISAS E NOTÍCIAS 〕
-┃
-┃  🪻 {PREFIXO}pinterest2 <pesquisa>
-┃ 💧◗ {PREFIXO}pesquisa_yt
-┃ 💧◗ {PREFIXO}signo
-┃ 💧◗ {PREFIXO}esportenoticias
-╰━━━━━━━━━━━━━━╯
+»»—✨️*INTELIGÊNCIAS ARTIFICIAIS*✨️—««
+•.̇𖥨֗💧⭟ !flux
+•.̇𖥨֗💧⭟ !gemini
+•.̇𖥨֗💧⭟ !gpt5
+•.̇𖥨֗💧⭟ !deepseek
+•.̇𖥨֗💧⭟ !haiku

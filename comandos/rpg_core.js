@@ -39,7 +39,7 @@ function getUsuario(dados, num) {
       conquistas: { desbloqueadas: [], monstros: 0 },
       ultimoInvestir: 0, ultimoMinerar: 0, ultimoPescar: 0, ultimoJob: 0,
       ultimoCassino: 0, ultimoLoteria: 0, raspadinhasHoje: 0, ultimoDiaRaspadinha: "",
-      ultimoMsgsDia: "", ultimoMsgsTotal: 0, roubos: []
+      ultimoMsgsDia: "", ultimoMsgsTotal: 0, msgs: 0, comandos: 0, figurinhas: 0, audios: 0, videos: 0, fotos: 0, palavras: 0, roubos: []
     };
   }
   const u = dados.usuarios[num];
@@ -112,6 +112,59 @@ function sortearItem(lista) {
 
 module.exports = {
   comandos: [
+
+// ==============================================
+// 🕵️ CRIME (RPG)
+// ==============================================
+{
+  nome: "crime",
+  descricao: "Tenta a sorte cometendo um crime",
+  async executar({ sock, idChat, msg, normalizarNumero }) {
+    const num = normalizarNumero(msg.key.participant || msg.key.remoteJid);
+    const dados = lerRPG();
+    const u = getUsuario(dados, num);
+
+    // Cooldown de 10 minutos pra não spammar
+    const cd = cooldownRestante(u.ultimoCrime || 0, 600000);
+    if (cd) return sock.sendMessage(idChat, { text: `⏰ A polícia tá de olho. Espere *${formatarTempo(cd)}* pra tentar outro crime.` });
+
+    u.ultimoCrime = Date.now();
+    const crimes = [
+      "fugiu de um assalto a banco", "hackeou o pentágono", "roubou um banco",
+      "sequestrou o gato do vizinho", "vendeu dólar falso", "assaltou uma padaria"
+    ];
+    const crimeEscolhido = crimes[Math.floor(Math.random() * crimes.length)];
+    const foiPego = Math.random() < 0.4; // 40% de chance de ser pego
+
+    let texto = "";
+    let imgTema = "police";
+
+    if (foiPego) {
+      const perda = Math.min(500, u.moedas || 0);
+      u.moedas -= perda;
+      texto = `🚔 *VOCÊ FOI PEGO!*\n\n> Você tentou *${crimeEscolhido}* mas a polícia te pegou.\n> 💸 Perdeu: *${perda}* moedas.\n> 🏦 Saldo: *${u.moedas}*`;
+      imgTema = "jail";
+    } else {
+      const ganho = rand(250, 400);
+      u.moedas += ganho;
+      texto = `🕵️ *VOCÊ SE SAFOU!*\n\n> Você *${crimeEscolhido}* e conseguiu escapar!\n> 💰 Ganhou: *${ganho}* moedas.\n> 🏦 Saldo: *${u.moedas}*`;
+      imgTema = "crime";
+    }
+
+    salvarRPG(dados);
+    u.xp += 15; // Dá um XP também
+
+    try {
+      // Usa picsum com seed pra pegar uma imagem aleatória
+      await sock.sendMessage(idChat, { 
+        image: { url: `https://picsum.photos/seed/${imgTema}${Date.now()}/600/400` }, 
+        caption: texto 
+      });
+    } catch {
+      await sock.sendMessage(idChat, { text: texto });
+    }
+  }
+},
 
 // ==============================================
 // 👹 CAÇAR MONSTROS
@@ -210,7 +263,7 @@ module.exports = {
       .replace(/{DATA}/g, data);
 
     // Verifica se tem mídia salva
-    const caminhoMeta = path.join(__dirname, "..", "dados", "menu_midia_menurpg.json");
+    const caminhoMeta = path.join(__dirname, "..", "dados", "menu_midia_menu.json");
     let midia = null;
     try {
       if (fs.existsSync(caminhoMeta)) {
@@ -784,13 +837,12 @@ for (const [k, v] of Object.entries(inv)) {
     }
   ],
 
-// HOOK DE XP/BÔNUS DIÁRIO
+// HOOK DE XP/BÔNUS DIÁRIO + CONTADOR DE TIPOS
 async aoReceberMensagem({ idChat, remetente, msg, sock }) {
   try {
     if (!idChat.endsWith("@g.us")) return;
     
     const dados = lerRPG();
-    // Só roda se o RPG tiver ativo no grupo
     if (!dados.grupos?.[idChat]?.modorpg) return;
     
     const num = normalizarNumero(remetente);
@@ -801,10 +853,10 @@ async aoReceberMensagem({ idChat, remetente, msg, sock }) {
     
     const hoje = new Date().toDateString();
 
-    // 🎁 BÔNUS DIÁRIO (1x por dia)
+    // 🎁 Bônus diário
     if (!u.ultimoMsgsDia || u.ultimoMsgsDia !== hoje) {
-      const ganhoMoedas = Math.floor(Math.random() * (500 - 300 + 1)) + 300; // 300 a 500
-      const ganhoXP = Math.floor(Math.random() * (15 - 5 + 1)) + 5;          // 5 a 15
+      const ganhoMoedas = Math.floor(Math.random() * (500 - 300 + 1)) + 300;
+      const ganhoXP = Math.floor(Math.random() * (15 - 5 + 1)) + 5;
       
       u.moedas += ganhoMoedas;
       u.xp += ganhoXP;
@@ -818,8 +870,23 @@ async aoReceberMensagem({ idChat, remetente, msg, sock }) {
       } catch {}
     }
 
-    u.msgs++;
-    // XP por mensagem normal (sem ser o bônus diário)
+    // 📊 Contadores de tipos de mensagem
+    const mm = msg.message || {};
+    u.msgs = (u.msgs || 0) + 1;
+    
+    if (mm.stickerMessage) u.figurinhas = (u.figurinhas || 0) + 1;
+    if (mm.audioMessage) u.audios = (u.audios || 0) + 1;
+    if (mm.videoMessage) u.videos = (u.videos || 0) + 1;
+    if (mm.imageMessage) u.fotos = (u.fotos || 0) + 1;
+    
+    // Conta as palavras do texto
+    const texto = mm.conversation || mm.extendedTextMessage?.text || "";
+    if (texto) {
+      const palavras = texto.trim().split(/\s+/).filter(p => p.length > 0);
+      u.palavras = (u.palavras || 0) + palavras.length;
+    }
+
+    // XP por mensagem
     u.xp += 2; 
     
     // Verifica level up
@@ -828,7 +895,7 @@ async aoReceberMensagem({ idChat, remetente, msg, sock }) {
     while (u.xp >= xpProx && u.nivel < 70) {
       u.xp -= xpProx;
       u.nivel++;
-      u.moedas += 500; // Bônus de level up
+      u.moedas += 500;
       xpProx = xpNecessario(u.nivel);
       subiu = true;
     }

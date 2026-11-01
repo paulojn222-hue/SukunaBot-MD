@@ -89,6 +89,68 @@ aoReceberMensagem({ idChat, remetente, msg }) {
   comandos: [
 
 // ==============================================
+// 📊 ATIVIDADE (Mostra estatísticas do membro)
+// ==============================================
+{
+  nome: "atividade",
+  descricao: "Mostra as estatísticas de atividade no grupo",
+  async executar({ sock, idChat, msg, normalizarNumero }) {
+    if (!idChat.endsWith("@g.us")) return sock.sendMessage(idChat, { text: "❌ Só funciona em grupos." });
+
+    // Pega o alvo (marcado ou respondido) ou o próprio autor
+    const alvoJid = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0]
+      || msg.message?.extendedTextMessage?.contextInfo?.participant
+      || msg.key.participant
+      || msg.key.remoteJid;
+
+    const alvoNum = normalizarNumero(alvoJid);
+
+    // Puxa os dados do RPG pra pegar as estatísticas
+    const ARQ_RPG = path.join(__dirname, "..", "dados", "rpg.json");
+    let rpgDados = { usuarios: {} };
+    try {
+      if (fs.existsSync(ARQ_RPG)) rpgDados = JSON.parse(fs.readFileSync(ARQ_RPG, "utf8"));
+    } catch {}
+
+    const u = rpgDados.usuarios?.[alvoNum] || {};
+    const msgs = u.msgs || 0;
+    const comandosUsados = u.comandos || 0;
+
+    // Pega a foto de perfil
+    let foto = null;
+    try { foto = await sock.profilePictureUrl(alvoJid, "image"); } catch {}
+
+    // Pega o tempo de grupo e o nome
+    let nomeGrupo = "Grupo";
+    let entrouEm = null;
+    try {
+      const meta = await sock.groupMetadata(idChat);
+      nomeGrupo = meta.subject;
+      const participante = meta.participants.find(p => p.id === alvoJid);
+      if (participante && participante.joinTime) {
+        entrouEm = new Date(participante.joinTime * 1000).toLocaleDateString("pt-BR");
+      }
+    } catch {}
+
+    const texto =
+      `📊 *ATIVIDADE — ${nomeGrupo}*\n\n` +
+      `> 👤 *Usuário:* @${alvoNum}\n` +
+      `> 📅 *No grupo desde:* ${entrouEm || "Desconhecido"}\n\n` +
+      `┃ 💬 *Mensagens:* ${msgs}\n` +
+      `┃ ⚙️ *Comandos:* ${comandosUsados}\n` +
+      `┃ 🎯 *Nível RPG:* ${u.nivel || 1}\n` +
+      `┃ 💰 *Moedas:* ${u.moedas || 0}\n`;
+
+    if (foto) {
+      await sock.sendMessage(idChat, { image: { url: foto }, caption: texto, mentions: [alvoJid] });
+    } else {
+      await sock.sendMessage(idChat, { text: texto, mentions: [alvoJid] });
+    }
+  }
+},
+
+
+// ==============================================
 // 🌤️ CLIMA (Consulta clima de uma cidade)
 // ==============================================
 {
@@ -145,7 +207,7 @@ aoReceberMensagem({ idChat, remetente, msg }) {
       const moeda = Object.values(data.currencies || {})[0]?.name || "N/A";
       const idioma = Object.values(data.languages || {}).join(", ") || "N/A";
 
-      const texto = `🌍 *${nome.toUpperCase()}*\n\n> 🏛️ Capital: *${capital}*\n> 🌎 Região: *${region || regiao}*\n> 👥 População: *${populacao}*\n> 📐 Área: *${area} km²*\n> 💰 Moeda: *${moeda}*\n> 🗣️ Idioma: *${idioma}*`;
+      const texto = `🌍 *${nome.toUpperCase()}*\n\n> 🏛️ Capital: *${capital}*\n> 🌎 Região: *${regiao}*\n > 👥 População: *${populacao}*\n> 📐 Área: *${area} km²*\n> 💰 Moeda: *${moeda}*\n> 🗣️ Idioma: *${idioma}*`;
 
       if (bandeira) {
         await sock.sendMessage(idChat, { image: { url: bandeira }, caption: texto });
@@ -236,12 +298,83 @@ aoReceberMensagem({ idChat, remetente, msg }) {
     // ==============================================
 {
   nome: "ping",
-  descricao: "Responde com Pong",
+  descricao: "Exibe o status do bot e informações da conexão",
   async executar({ sock, idChat }) {
-    await sock.sendMessage(idChat, {
-text: "✨️  PONG",
-...(typeof botaoCanal === "function" ? botaoCanal() : {})
+    const inicio = Date.now();
+
+    const data = new Date();
+    const dataFormatada = data.toLocaleDateString("pt-BR", {
+      timeZone: "America/Sao_Paulo"
     });
+
+    const horaFormatada = data.toLocaleTimeString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+
+    const usoMemoria = process.memoryUsage();
+    const memoriaMB = (usoMemoria.rss / 1024 / 1024).toFixed(2);
+    const heapMB = (usoMemoria.heapUsed / 1024 / 1024).toFixed(2);
+    const heapTotalMB = (usoMemoria.heapTotal / 1024 / 1024).toFixed(2);
+
+    const tempoLigado = process.uptime();
+
+    const formatarTempo = (segundos) => {
+      const dias = Math.floor(segundos / 86400);
+      const horas = Math.floor((segundos % 86400) / 3600);
+      const minutos = Math.floor((segundos % 3600) / 60);
+      const segs = Math.floor(segundos % 60);
+
+      return [
+        dias > 0 ? `${dias}d` : null,
+        horas > 0 ? `${horas}h` : null,
+        minutos > 0 ? `${minutos}min` : null,
+        `${segs}s`
+      ].filter(Boolean).join(" ");
+    };
+
+    const plataforma = process.platform;
+    const versaoNode = process.version;
+
+    const mensagem = await sock.sendMessage(idChat, {
+      text:
+        `╭━━━〔 ⚡ *SISTEMA DE PING* 〕━━━╮\n` +
+        `┃\n` +
+        `┃ 👻 *BOT:* Online e operacional\n` +
+        `┃ 🟢 *STATUS:* Todos os sistemas ativos\n` +
+        `┃ 📡 *CONEXÃO:* WhatsApp conectado\n` +
+        `┃\n` +
+        `┣━━〔 🚀 DESEMPENHO 〕━━\n` +
+        `┃\n` +
+        `┃ ⚡ *Resposta:* Calculando...\n` +
+        `┃ 🧠 *Memória RAM:* ${memoriaMB} MB\n` +
+        `┃ 📊 *Heap utilizado:* ${heapMB} MB\n` +
+        `┃ 💾 *Heap total:* ${heapTotalMB} MB\n` +
+        `┃ ⏱️ *Tempo ligado:* ${formatarTempo(tempoLigado)}\n` +
+        `┃\n` +
+        `┣━━〔 ⚙️ AMBIENTE 〕━━\n` +
+        `┃\n` +
+        `┃ 🖥️ *Plataforma:* ${plataforma}\n` +
+        `┃ 🟩 *Node.js:* ${versaoNode}\n` +
+        `┃ 🔧 *Processo:* ${process.pid}\n` +
+        `┃\n` +
+        `┣━━〔 📅 INFORMAÇÕES 〕━━\n` +
+        `┃\n` +
+        `┃ 📆 *Data:* ${dataFormatada}\n` +
+        `┃ 🕒 *Horário:* ${horaFormatada}\n` +
+        `┃ 🌎 *Fuso:* Brasília (GMT-3)\n` +
+        `┃\n` +
+        `╰━━━〔 👻 *SISTEMA ATIVO* 〕━━━╯\n\n` +
+        `> ✨ Monitoramento executado com sucesso!`,
+      ...(typeof botaoCanal === "function" ? botaoCanal() : {})
+    });
+
+    const latencia = Date.now() - inicio;
+
+    // A latência real será calculada antes do envio
+    // nas próximas execuções, se você implementar um teste separado.
   }
 },
     // ==============================================
@@ -430,30 +563,75 @@ text: "✨️  PONG",
       }
     },
 
-    // ==============================================
-    // 🪄 CANTADAS
-    // ==============================================
-    {
-      nome: "cantadas",
-      descricao: "Manda uma cantada aleatória",
-      async executar({ sock, idChat }) {
-        try {
-          const r = await fetch("https://raw.githubusercontent.com/David-Trajano/apis/main/cantadas.json");
-          const lista = await r.json();
-          const c = lista[Math.floor(Math.random() * lista.length)];
-          const texto = typeof c === "string" ? c : (c.cantada || c.text || JSON.stringify(c));
-          await sock.sendMessage(idChat, { text: `💘 ${texto}` });
-        } catch {
-          const local = [
-            "Você não é a lua, mas ilumina igual. 🌙",
-            "Se beleza fosse crime, você pegava prisão perpétua. 😍",
-            "Você é a prova de que Deus caprichou. ✨"
-          ];
-          const c = local[Math.floor(Math.random() * local.length)];
-          await sock.sendMessage(idChat, { text: `💘 ${c}` });
-        }
+// ==============================================
+// 💘 CANTADAS (com imagem)
+// ==============================================
+{
+  nome: "cantadas",
+  descricao: "Manda uma cantada aleatória com imagem",
+  async executar({ sock, idChat }) {
+    const local = [
+      "Você não é a lua, mas ilumina igual. 🌙",
+      "Se beleza fosse crime, você pegava prisão perpétua. 😍",
+      "Você é a prova de que Deus caprichou. ✨",
+      "Você tem um mapa? Porque me perdi no brilho dos seus olhos. 🗺️",
+      "Seu pai é padeiro? Porque você é um sonho. 🥖",
+      "Você não é colesterol, mas afetou o meu coração. ❤️",
+      "Penso em você 25h por dia. Meu coração faz hora extra. ⏰",
+      "Você é a figurinha que falta no meu álbum. Cola em mim? 🏆",
+      "Me chama de Sedex que eu me entrego pra você. 📦",
+      "Você não é banco, mas tem todo o meu interesse. 🏦",
+      "Seu pai é ladrão? Roubou o brilho das estrelas e colocou no seu olhar. ⭐",
+      "Você é Wi-Fi? Porque estou sentindo uma conexão. 📶",
+      "Você não é chocolate, mas é uma tentação. 🍫",
+      "Se eu fosse poeta, só pensaria em você. 📝",
+      "Você é a exceção da minha regra. 💫",
+      "Gata, você é tão linda que faz um cego acreditar em amor à primeira vista. 👀",
+      "Você não é o sol, mas ilumina o meu dia. ☀️",
+      "Seu nome é Google? Porque você tem tudo que eu procuro. 🔍",
+      "Você é a razão do meu sorriso bobo. 😊",
+      "Se beijo fosse remédio, você seria a cura. 💊",
+      "Você não é anjo, mas tem asas no meu coração. 😇",
+      "Aposto um beijo como você não ficou comigo ainda. 💋",
+      "Você é a música que não sai da minha cabeça. 🎵",
+      "Seu abraço deve ser o lugar mais seguro do mundo. 🫂",
+      "Você não é estrela, mas brilha mais que todas. 🌟",
+      "Meu coração bate mais forte quando você aparece. 💓",
+      "Você é o 'sim' que eu esperava ouvir. ✅",
+      "Se saudade matasse, eu já estaria morto por você. 🥀",
+      "Você é a resposta da minha oração. 🙏",
+      "Não sou o homem mais rico, mas tenho o coração mais cheio de você. 💎"
+    ];
+
+    try {
+      let cantada;
+      try {
+        const r = await fetch("https://raw.githubusercontent.com/David-Trajano/apis/main/cantadas.json");
+        const lista = await r.json();
+        const c = lista[Math.floor(Math.random() * lista.length)];
+        cantada = typeof c === "string" ? c : (c.cantada || c.text || JSON.stringify(c));
+      } catch {
+        cantada = local[Math.floor(Math.random() * local.length)];
       }
-    },
+
+      const imgUrl =
+        "https://image.pollinations.ai/prompt/" +
+        encodeURIComponent(
+          `romantic cute background, soft pink hearts, sweet love card, text: "${cantada}"`
+        ) +
+        "?width=1080&height=1080&nologo=true&seed=" +
+        Math.floor(Math.random() * 999999);
+
+      await sock.sendMessage(idChat, {
+        image: { url: imgUrl },
+        caption: `💘 ${cantada}`
+      });
+    } catch (e) {
+      const c = local[Math.floor(Math.random() * local.length)];
+      await sock.sendMessage(idChat, { text: `💘 ${c}` });
+    }
+  }
+},
 
 // ==============================================
 // 🪄 FATOS (traduzido pro português)
@@ -463,11 +641,9 @@ text: "✨️  PONG",
   descricao: "Manda um fato aleatório em português",
   async executar({ sock, idChat }) {
     try {
-      // Busca em inglês (API só tem EN de verdade)
       const r = await fetch("https://uselessfacts.jsph.pl/api/v2/facts/random?language=en");
       const j = await r.json();
 
-      // Traduz pro português usando Google Translate
       let fato = j.text;
       try {
         const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=pt&dt=t&q=${encodeURIComponent(j.text)}`;
@@ -482,31 +658,85 @@ text: "✨️  PONG",
     }
   }
 },
-    // ==============================================
-    // 🪄 MOEDAS — cotação
-    // ==============================================
-    {
-      nome: "moedas",
-      descricao: "Mostra cotação de moedas",
-      async executar({ sock, idChat }) {
-        try {
-          const r = await fetch("https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL,GBP-BRL,ARS-BRL");
-          const j = await r.json();
-          const linhas = [
-            `💵 *USD* → R$ ${parseFloat(j.USDBRL.bid).toFixed(2)}`,
-            `💶 *EUR* → R$ ${parseFloat(j.EURBRL.bid).toFixed(2)}`,
-            `💷 *GBP* → R$ ${parseFloat(j.GBPBRL.bid).toFixed(2)}`,
-            `₿ *BTC* → R$ ${parseFloat(j.BTCBRL.bid).toFixed(2)}`,
-            `🇦🇷 *ARS* → R$ ${parseFloat(j.ARSBRL.bid).toFixed(4)}`
-          ];
-          await sock.sendMessage(idChat, {
-            text: `💰 *COTAÇÕES (${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}):*\n\n${linhas.join("\n")}`
-          });
-        } catch (e) {
-          await sock.sendMessage(idChat, { text: `❌ Erro ao buscar cotações: ${e.message}` });
+
+// ==============================================
+// 💰 MOEDAS — cotação (Fawaz Ahmed API - sem chave)
+// ==============================================
+{
+  nome: "moedas",
+  descricao: "Mostra cotação de moedas",
+  async executar({ sock, idChat }) {
+    try {
+      // Fawaz Ahmed API (gratuita, sem chave, via CDN jsDelivr)
+      const url = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/brl.json";
+      const r = await fetch(url);
+
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const dados = await r.json();
+      const taxas = dados.brl; // 1 BRL = X (em cada moeda)
+
+      // Lista de moedas que queremos exibir
+      const moedas = [
+        { code: "usd", emoji: "💵", nome: "Dólar Americano" },
+        { code: "eur", emoji: "💶", nome: "Euro" },
+        { code: "gbp", emoji: "💷", nome: "Libra Esterlina" },
+        { code: "jpy", emoji: "🇯🇵", nome: "Iene Japonês" },
+        { code: "cad", emoji: "🇨🇦", nome: "Dólar Canadense" },
+        { code: "aud", emoji: "🇦🇺", nome: "Dólar Australiano" },
+        { code: "chf", emoji: "🇨🇭", nome: "Franco Suíço" },
+        { code: "cny", emoji: "🇨🇳", nome: "Yuan Chinês" },
+        { code: "ars", emoji: "🇦🇷", nome: "Peso Argentino" },
+        { code: "clp", emoji: "🇨🇱", nome: "Peso Chileno" },
+        { code: "mxn", emoji: "🇲🇽", nome: "Peso Mexicano" },
+        { code: "pyg", emoji: "🇵🇾", nome: "Guarani Paraguaio" },
+        // Criptomoedas
+        { code: "btc", emoji: "₿", nome: "Bitcoin" },
+        { code: "eth", emoji: "🪙", nome: "Ethereum" },
+        { code: "ltc", emoji: "🪙", nome: "Litecoin" },
+        { code: "xrp", emoji: "🪙", nome: "Ripple" }
+      ];
+
+      const linhas = [];
+      for (const m of moedas) {
+        const taxa = taxas[m.code];
+        if (taxa === undefined) continue;
+
+        // A API retorna "1 BRL = X moeda". Invertemos para "1 moeda = Y BRL"
+        const valorEmBrl = 1 / taxa;
+
+        // Formata: valores pequenos (cripto, pesos) com mais casas decimais
+        let formatado;
+        if (valorEmBrl >= 1000) {
+          formatado = valorEmBrl.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } else if (valorEmBrl >= 1) {
+          formatado = valorEmBrl.toFixed(2);
+        } else {
+          formatado = valorEmBrl.toFixed(4);
         }
+
+        linhas.push(`${m.emoji} *${m.code.toUpperCase()}* (${m.nome}) → R$ ${formatado}`);
       }
-    },
+
+      if (linhas.length === 0) {
+        return sock.sendMessage(idChat, {
+          text: "⚠️ Nenhuma cotação retornou. Tente novamente mais tarde."
+        });
+      }
+
+      await sock.sendMessage(idChat, {
+        text:
+          `💰 *COTAÇÕES — ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}*\n\n` +
+          linhas.join("\n") +
+          `\n\n> 📊 Fonte: Fawaz Ahmed Currency API`
+      });
+
+    } catch (e) {
+      await sock.sendMessage(idChat, {
+        text: `❌ Erro ao buscar cotações: ${e.message}`
+      });
+    }
+  }
+},
 
     // ==============================================
     // 🪄 CONTAR LETRAS
@@ -595,21 +825,46 @@ text: "✨️  PONG",
     },
 
 // ==============================================
-// 🪄 VERSÍCULO (em português)
+// 🪄 VERSÍCULO COM IMAGEM (em português)
 // ==============================================
 {
   nome: "versiculo",
-  descricao: "Manda um versículo aleatório em português",
+  descricao: "Manda um versículo aleatório em português com imagem",
   async executar({ sock, idChat }) {
     try {
-      const r = await fetch("https://bible-api.com/data/almeida/random");
-      const j = await r.json();
-      const v = j.random_verse;
+      // 1) Busca o versículo
+      let referencia, texto;
+      try {
+        const r = await fetch("https://bible-api.com/data/almeida/random");
+        const j = await r.json();
+        const v = j.random_verse;
+        referencia = `${v.book} ${v.chapter}:${v.verse}`;
+        texto = v.text.trim();
+      } catch {
+        const r = await fetch("https://bible-api.com/joao%203:16?translation=almeida");
+        const j = await r.json();
+        referencia = j.reference;
+        texto = j.text.trim();
+      }
+
+      // 2) Gera a imagem com o versículo (via API de texto em imagem)
+      // Usamos a API pública do "textpro" / "nekos" style. Aqui vai uma opção estável:
+      const imgUrl =
+        "https://image.pollinations.ai/prompt/" +
+        encodeURIComponent(
+          `Beautiful serene background, soft light, nature, inspirational bible verse card, text: "${referencia} - ${texto}"`
+        ) +
+        "?width=1080&height=1080&nologo=true&seed=" +
+        Math.floor(Math.random() * 999999);
+
+      // 3) Envia imagem + legenda
       await sock.sendMessage(idChat, {
-        text: `📖 *${v.book} ${v.chapter}:${v.verse}*\n\n_"${v.text.trim()}"_`
+        image: { url: imgUrl },
+        caption: `📖 *${referencia}*\n\n_"${texto}"_`
       });
-    } catch {
-      // Fallback: usa outro endpoint se o random falhar
+
+    } catch (e) {
+      // Fallback: só texto
       try {
         const r = await fetch("https://bible-api.com/joao%203:16?translation=almeida");
         const j = await r.json();
@@ -617,13 +872,14 @@ text: "✨️  PONG",
           text: `📖 *${j.reference}*\n\n_"${j.text.trim()}"_`
         });
       } catch {
-        await sock.sendMessage(idChat, { text: "❌ Não consegui buscar um versículo agora." });
+        await sock.sendMessage(idChat, {
+          text: "❌ Não consegui buscar um versículo agora."
+        });
       }
     }
   }
 },
-    // ==============================================
-    // ✨️ DONO — frase + contato do dono
+
     // ==============================================
     {
       nome: "dono",

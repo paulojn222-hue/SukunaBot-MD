@@ -1,0 +1,41 @@
+
+🔑 Verificando licença...
+✅ Licença ok — cliente: 559391595706
+
+[96m✅ adm.js → addstatus, x9_adm, limite_adv, menuadm, ban, promover, rebaixar, mute, unmute, adv, veradv, rmadv, zeraradv, abrir, fechar, fechargp, abrirgp, cancelarfechargp, cancelarabrirgp, legendafechar, legendaabrir, foto_fechar, foto_abrir, setnomegp, set_descricao, infogrupo, link, resetlink, somente_adm, sorteio, totag, r, antiimg, antifig, antiaudio, antivideo, antilink, modo, addparceria, delparceria, lista_parceria, add_listanegra, rm_listanegra, listanegra, ativar_bemvindo, desativar_bemvindo, textobemvindo, midiabemvindo, textosaiu, midiasaiu[0m
+[96m✅ aluguel.js → planos, addplano, delplano, alugar, alugados, setaluguel[0m
+[96m✅ aluguel2.js → delaluguel, info_aluguel, aluguelgb[0m
+[96m✅ atualizar.js → atualizar[0m
+[96m✅ bots.js → checkbots[0m
+[96m✅ dono.js → ativar_botao, desativar_botao, uptime, broadcast, foto_erro, view, apikey, reiniciar, figcmd, delcmdfig, listacmdfig, setchat, setchannel, channel, kitar, addsubdono, rmsubdono, lista_subdonos, rg_prefixo, meulid, grupoid, aluguelglobal, add_aluguel, rmaluguel, alugueis, entrar, setmenu, rm_midiamenu, addcmdp, rmcmdp, listacmdp, menudono[0m
+[96m✅ figurinhas.js → menufig, s, s2, toimg, rename, attp, attp2, ttp_white, brat, autofig[0m
+[96m✅ game.js → menugame, ppt, pais, quiz, quemsoueu, forca, adedonha, velha, conecta4, cacapalavras[0m
+[96m✅ membros.js → atividade, clima, infopais, afk, chat, ping, middle, perfil, traduzir, cantadas, fatos, moedas, contar_letras, calcular, alugar, versiculo, dono, criador, adms, infobot[0m
+[96m✅ menu.js → menu[0m
+[31m❌ Erro ao carregar pesquisas.js: Unexpected token ']'[0m
+[96m✅ rpg_conquistas.js → conquistas, ranknivel, rankmonstros, rankriqueza, titulorpg[0m
+[96m✅ rpg_core.js → crime, cacar, menurpg, modorpg, saldo, ranknivel, rankmonstros, rankriqueza, investir, roubar, minerar, pescar, job, cassino, loteria, raspadinha, mochila, loja, comprar, equipar, vender, doar, pix, addmoedas, delmoedas[0m
+[96m✅ rpg_extra.js → banco, saldobanco, sacar, petshop, buypet, statuspet, nomearpet, soltarpet, alimentarpet, treinarpet, batalharpet, emprestimo, pagar, casar, aceitarcasar, recusarcasar, divorciar, adotar, aceitaradocao, recusaradocao, expulsarfilho, meusfilhos, minhafamilia, arvoregenealogica, mesada, presentear[0m
+[96m✅ rpg_jardinagem.js → jardin, melhorar_jardin, loja_semente, coletar, vender_planta, comprar_inseticida, inseticida, plantar, vender_planta, doar_planta[0m
+[96m✅ sistemas.js → antiflood, enquete, lembrar, resumir[0m
+[96m✅ vip.js → revelar, axis, cep, sora, g1, menuvip, addvip, rmvip, listavip, vip, info_ddd, info_ddi, anotar, anotações, rm_anotação, aura, idade, definir_aniversário, rm_aniversário[0m
+
+[96m📋 Total de comandos: 218[0m
+
+[96m════════════════════════════════════════════════════[0m
+[96m╭──────────────────────────────────────────────────╮[0m
+[96m│[0m[1m              🤖 HoshinoBot-MD v2 🤖              [0m[96m│[0m
+[96m╰──────────────────────────────────────────────────╯[0m
+[96m════════════════════════════════════════════════════[0m
+[96m📌 Nome do Bot:   [0mHoshinoBot-MD v2
+[96m👤 Nome Dono:     [0mMoon
+[96m📱 Número Dono:   [0m5563975965071
+[96m🔌 Status:        [31m❌ Desconectado[0m
+[96m════════════════════════════════════════════════════[0m
+[33m🔌 MENU DE CONEXÃO[0m
+
+  [96m1.[0m 📷 Conectar via QR Code
+  [96m2.[0m 🆔 Conectar via Código de Emparelhamento
+  [96m0.[0m 🚪 Sair
+
+[33mEscolha uma opção (1, 2 ou 0): [0m

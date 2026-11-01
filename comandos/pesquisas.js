@@ -1,952 +1,538 @@
-const fs = require("fs");
-const path = require("path");
-const axios = require("axios");
-const FormData = require("form-data");
-const { downloadContentFromMessage } = require("@whiskeysockets/baileys");
+const axios = require('axios');
+const FormData = require('form-data');
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 
-// 🔑 Puxa a key do config
-const config = require("../config.js");
-const API_KEY_BRONXYS = config.API_KEY_BRONXYS || "";
+// Função para pegar a chave da API de forma segura, seja qual for o nome no config
+function obterApiKey(config) {
+    if (config?.spiderKey) return config.spiderKey;
+    try {
+        const cfg = require('../config.js');
+        return cfg.spiderKey || cfg.SPIDER_X_API_KEY || cfg.apiKey || "";
+    } catch (e) {
+        return "";
+    }
+}
 
-// ==============================================
-// 🛠️ HELPERS
-// ==============================================
-const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+function getBotaoCanal() {
+    try {
+        const config = require('../config.js');
+        if (!config.canal || !config.canal.id) return {};
+        return {
+            contextInfo: {
+                forwardingScore: 999,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: config.canal.id.trim(),
+                    newsletterName: config.canal.nome || "Ver Canal",
+                    serverMessageId: Math.floor(Math.random() * 99999) + 1
+                }
+            }
+        };
+    } catch (e) { return {}; }
+}
+
+function buildApiUrl(path, params = {}, apiKey) {
+    const url = new URL("https://api.spiderx.com.br/api" + path);
+    url.searchParams.set('api_key', apiKey);
+    Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, value);
+    });
+    return url.toString();
+}
+
+function getApiHeaders(apiKey) {
+    return { 'X-API-KEY': apiKey };
+}
 
 async function fetchJson(url) {
-  const response = await axios.get(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0',
-      'Accept-Language': 'pt-BR'
-    }
-  });
-  return response.data;
+    const response = await axios.get(url, { headers: { 'User-Agent': 'SpiderX-Examples/1.0', 'Accept-Language': 'pt-BR' } });
+    return response.data;
 }
 
-async function getFileBuffer(mediaKey, MediaType) {
-  const stream = await downloadContentFromMessage(mediaKey, MediaType);
-  let buffer = Buffer.from([]);
-  for await (const chunk of stream) {
-    buffer = Buffer.concat([buffer, chunk]);
-  }
-  return buffer;
+async function postJson(url, body) {
+    const response = await axios.post(url, body, { headers: { 'Content-Type': 'application/json' } });
+    return response.data;
 }
 
-async function uploadX(midia) {
-  try {
-    const form = new FormData();
-    form.append("file", midia, `upload.jpg`);
-    const response = await fetch(`https://api.bronxyshost.com.br/api-bronxys/link_imagem?apikey=${API_KEY_BRONXYS}`, {
-      method: "POST",
-      body: form
-    });
-    const data = await response.json();
-    return data.link;
-  } catch (error) {
-    console.log("Erro upload:", error);
-    throw error;
-  }
+async function postForm(url, form, options = {}) {
+    const response = await axios.post(url, form, { headers: { ...form.getHeaders(), ...options.headers }, ...options });
+    return response.data;
 }
 
-// ==============================================
-// 📄 MENU PESQUISAS (editável)
-// ==============================================
-function carregarMenuPesquisas() {
-  const ARQ = path.join(__dirname, "..", "personalize_aqui", "menu_pesquisas.txt");
-  try {
-    return fs.readFileSync(ARQ, "utf8");
-  } catch {
-    return "❌ Arquivo personalize_aqui/menu_pesquisas.txt não encontrado!";
-  }
+async function postFormBuffer(url, form, options = {}) {
+    const response = await axios.post(url, form, { responseType: 'arraybuffer', headers: { ...form.getHeaders(), ...options.headers }, ...options });
+    return Buffer.from(response.data);
+}
+
+async function getFileBuffer(mediakey, mediaType) {
+    const stream = await downloadContentFromMessage(mediakey, mediaType);
+    let buffer = Buffer.from([]);
+    for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+    return buffer;
 }
 
 module.exports = {
-  comandos: [
-    // ==============================================
-    // 📋 MENU PESQUISAS
-    // ==============================================
-{
-  nome: "menubaixar",
-  descricao: "Mostra o menu de pesquisas",
-  async executar({ sock, idChat, msg, PREFIXO, NOME_BOT, DONO_PRINCIPAL_NOME }) {
-    const data = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
-
-    let texto = carregarMenuPesquisas()
-      .replace(/{PREFIXO}/g, PREFIXO || "!")
-      .replace(/{BOT}/g, NOME_BOT || "Bot")
-      .replace(/{DONO}/g, DONO_PRINCIPAL_NOME || "Dono")
-      .replace(/{DATA}/g, data);
-
-    const caminhoMeta = path.join(__dirname, "..", "dados", "menu_midia_menupesquisas.json");
-    let midia = null;
-    try {
-      if (fs.existsSync(caminhoMeta)) {
-        const meta = JSON.parse(fs.readFileSync(caminhoMeta, "utf8"));
-        if (meta && typeof meta.arquivo === "string") {
-          const caminhoArq = path.join(__dirname, "..", "dados", meta.arquivo);
-          if (fs.existsSync(caminhoArq)) {
-            midia = { meta, buffer: fs.readFileSync(caminhoArq) };
-          }
-        }
-      }
-    } catch {}
-
-    const remetente = msg.key.participant || msg.key.remoteJid;
-
-    if (midia?.meta?.tipo === "image") {
-      await sock.sendMessage(idChat, { image: midia.buffer, caption: texto, mentions: [remetente] });
-    } else if (midia?.meta?.tipo === "video") {
-      await sock.sendMessage(idChat, {
-        video: midia.buffer, caption: texto, mentions: [remetente],
-        gifPlayback: true
-      });
-    } else {
-      await sock.sendMessage(idChat, { text: texto, mentions: [remetente] });
-    }
-  }
-},
-    // ==============================================
-    // 🎵 MÚSICA
-    // ==============================================
-    {
-      nome: "play",
-      descricao: "Baixa música do YouTube em áudio",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q) return sock.sendMessage(idChat, { text: `🎵 Exemplo: *!play nome da música*` });
-        try {
-          const data = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/pesquisa_ytb?nome=${encodeURIComponent(q)}&apikey=${API_KEY_BRONXYS}`);
-          if (!data || !data[0]) return sock.sendMessage(idChat, { text: "❌ Música não encontrada." });
-          if (data[0]?.tempo?.length >= 7) return sock.sendMessage(idChat, { text: "⏰ Muito grande (mais de 1h)." });
-
-          const titulo = data[0]?.titulo || "play";
-          await sock.sendMessage(idChat, {
-            image: { url: data[0]?.thumb },
-            caption: `🎵 *${titulo}*\n⏱️ ${data[0]?.tempo}\n\nBaixando áudio...`
-          });
-          await sock.sendMessage(idChat, {
-            audio: { url: `https://api.bronxyshost.com.br/api-bronxys/play?nome_url=${encodeURIComponent(q)}&apikey=${API_KEY_BRONXYS}` },
-            mimetype: "audio/mpeg",
-            fileName: `${titulo}.mp3`
-          });
-        } catch (e) {
-          console.log("Erro play:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Não consegui baixar. Tenta outro nome ou verifica a API key." });
-        }
-      }
-    },
+    comandos: [
 
 // ==============================================
-// 📋 ADDPLAYLIST
+// 📋 MENU DE DOWNLOADS E PESQUISAS (Personalizável)
 // ==============================================
 {
-  nome: "addplaylist",
-  descricao: "Adiciona uma música à playlist",
-  async executar({ sock, idChat, msg, normalizarNumero }) {
-    const ctx = msg.message?.extendedTextMessage?.contextInfo;
-    const quoted = ctx?.quotedMessage;
+    nome: "menubaixar",
+    descricao: "Mostra o menu de downloads e IA",
+    async executar({ sock, idChat, msg, resto, config, PREFIXO, NOME_BOT }) {
+        const fs = require("fs");
+        const path = require("path");
+        
+        // Pega as configurações básicas ou usa padrões
+        const p = PREFIXO || "!";
+        const botNome = NOME_BOT || "MoonBot";
 
-    if (!quoted) {
-      return sock.sendMessage(idChat, {
-        text: "❌ Responda a uma *música* enviada pelo *!play* com *!addplaylist*"
-      });
+        // 1. Busca o texto no arquivo .txt
+        let textoMenu = "";
+        const caminhoTexto = path.join(__dirname, "..", "personalize_aqui", "menu_pesquisas.txt");
+        
+        try {
+            if (fs.existsSync(caminhoTexto)) {
+                textoMenu = fs.readFileSync(caminhoTexto, "utf8");
+                // Substitui as variáveis no texto
+                textoMenu = textoMenu
+                    .replace(/{PREFIXO}/g, p)
+                    .replace(/{BOT}/g, botNome);
+            } else {
+                // Fallback caso o arquivo não exista
+                textoMenu = `╭━━━〔 📥 *MENU DE DOWNLOADS* 〕━━━╮\n┃\n┃ ⚠️ O arquivo de texto do menu não foi encontrado.\n┃ Crie o arquivo em: personaliz_aqui/menu_pesquisas.txt\n┃\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`;
+            }
+        } catch (e) {
+            textoMenu = "❌ Erro ao ler o arquivo de texto do menu.";
+        }
+
+        // 2. Busca a mídia (imagem/vídeo) no JSON
+        const caminhoMeta = path.join(__dirname, "..", "dados", "menu_midia_menu.json");
+        let midia = null;
+        
+        try {
+            if (fs.existsSync(caminhoMeta)) {
+                const meta = JSON.parse(fs.readFileSync(caminhoMeta, "utf8"));
+                if (meta && typeof meta.arquivo === "string") {
+                    const caminhoArq = path.join(__dirname, "..", "dados", meta.arquivo);
+                    if (fs.existsSync(caminhoArq)) {
+                        midia = { meta, buffer: fs.readFileSync(caminhoArq) };
+                    }
+                }
+            }
+        } catch (e) {
+            console.log("Erro ao carregar mídia do menu:", e);
+        }
+
+        // 3. Define quem será mencionado
+        const remetente = msg.key.participant || msg.key.remoteJid;
+
+        // 4. Envia com mídia (se existir) ou só o texto
+        if (midia?.meta?.tipo === "image") {
+            await sock.sendMessage(idChat, {
+                image: midia.buffer,
+                caption: textoMenu,
+                mentions: [remetente],
+                ...getBotaoCanal()
+            }, { quoted: msg });
+        } else if (midia?.meta?.tipo === "video") {
+            await sock.sendMessage(idChat, {
+                video: midia.buffer,
+                caption: textoMenu,
+                mentions: [remetente],
+                gifPlayback: true,
+                ...getBotaoCanal()
+            }, { quoted: msg });
+        } else {
+            await sock.sendMessage(idChat, {
+                text: textoMenu,
+                mentions: [remetente],
+                ...getBotaoCanal()
+            }, { quoted: msg });
+        }
     }
-
-    // Pega o nome da música (do caption da imagem ou do áudio)
-    let nomeMusica = "";
-    if (quoted.imageMessage?.caption) nomeMusica = quoted.imageMessage.caption;
-    else if (quoted.videoMessage?.caption) nomeMusica = quoted.videoMessage.caption;
-    else if (quoted.documentMessage?.fileName) nomeMusica = quoted.documentMessage.fileName;
-    else if (quoted.audioMessage) {
-      // Se for áudio, tenta pegar do contexto
-      nomeMusica = ctx?.quotedMessage?.audioMessage?.fileName || "";
-    }
-
-    // Limpa o nome — pega só o título
-    let titulo = nomeMusica;
-    if (titulo.includes("🎵")) {
-      const match = titulo.match(/🎵\s*\*?([^\n*]+)\*?/);
-      if (match) titulo = match[1].trim();
-    }
-    if (!titulo || titulo.length > 100) {
-      titulo = "Música " + Date.now().toString().slice(-4);
-    }
-
-    // Remove emojis e caracteres estranhos
-    titulo = titulo.replace(/[*_~`]/g, "").trim();
-
-    const euJid = msg.key.participant || msg.key.remoteJid;
-    const num = normalizarNumero(euJid);
-
-    const ARQ = path.join(__dirname, "..", "dados", "playlists.json");
-    let dados = {};
-    try {
-      if (fs.existsSync(ARQ)) dados = JSON.parse(fs.readFileSync(ARQ, "utf8"));
-    } catch {}
-
-    if (!dados[num]) dados[num] = { lista: [], proxId: 1 };
-
-    const id = dados[num].proxId++;
-    dados[num].lista.push({
-      id,
-      titulo,
-      adicionado: Date.now(),
-      jid: euJid
-    });
-
-    fs.mkdirSync(path.dirname(ARQ), { recursive: true });
-    fs.writeFileSync(ARQ, JSON.stringify(dados, null, 2));
-
-    await sock.sendMessage(idChat, {
-      text:
-        `✅ *Música adicionada!*\n\n` +
-        `> 🆔 ID: *#${id}*\n` +
-        `> 🎵 Título: *${titulo}*\n\n` +
-        `> Use *!playlist* pra ver todas.`,
-      mentions: [euJid]
-    });
-  }
 },
 
-// ==============================================
-// 📋 RMPLAYLIST
-// ==============================================
 {
-  nome: "rmplaylist",
-  descricao: "Remove uma música da playlist",
-  async executar({ sock, idChat, msg, resto, normalizarNumero }) {
-    const id = parseInt((resto || "").trim());
-    if (!id) return sock.sendMessage(idChat, { text: "❌ Uso: *!rmplaylist <id>*" });
-
-    const euJid = msg.key.participant || msg.key.remoteJid;
-    const num = normalizarNumero(euJid);
-
-    const ARQ = path.join(__dirname, "..", "dados", "playlists.json");
-    if (!fs.existsSync(ARQ)) {
-      return sock.sendMessage(idChat, { text: "📭 Você não tem playlist." });
+    nome: "ytmp3",
+    descricao: "Baixa áudio do YouTube",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ *Eita!* Cadê o link do YouTube?", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "⏳ Já volto com o áudio!", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const data = await fetchJson(buildApiUrl('/downloads/yt-mp3', { url: resto.trim() }, obterApiKey(config)));
+            await sock.sendMessage(idChat, { audio: { url: data.url }, mimetype: "audio/mpeg", fileName: `${data.title || 'audio'}.mp3`, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ Erro ao baixar.", ...getBotaoCanal() }, { quoted: msg }); }
     }
-
-    let dados = {};
-    try { dados = JSON.parse(fs.readFileSync(ARQ, "utf8")); } catch {}
-
-    if (!dados[num]?.lista?.length) {
-      return sock.sendMessage(idChat, { text: "📭 Você não tem playlist." });
-    }
-
-    const idx = dados[num].lista.findIndex(m => m.id === id);
-    if (idx < 0) {
-      return sock.sendMessage(idChat, { text: `❌ Música *#${id}* não encontrada.` });
-    }
-
-    const removida = dados[num].lista.splice(idx, 1)[0];
-    fs.writeFileSync(ARQ, JSON.stringify(dados, null, 2));
-
-    await sock.sendMessage(idChat, {
-      text:
-        `🗑️ *Música removida!*\n\n` +
-        `> 🆔 ID: *#${id}*\n` +
-        `> 🎵 Título: *${removida.titulo}*`
-    });
-  }
 },
-
-// ==============================================
-// 📋 PLAYLIST
-// ==============================================
 {
-  nome: "playlist",
-  descricao: "Mostra sua playlist",
-  async executar({ sock, idChat, msg, normalizarNumero }) {
-    const euJid = msg.key.participant || msg.key.remoteJid;
-    const num = normalizarNumero(euJid);
-
-    const ARQ = path.join(__dirname, "..", "dados", "playlists.json");
-    if (!fs.existsSync(ARQ)) {
-      return sock.sendMessage(idChat, { text: "📭 Você não tem playlist ainda.\n\n> Use *!play* e depois *!addplaylist*." });
+    nome: "ytmp4",
+    descricao: "Baixa vídeo do YouTube",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ *Calma aí!* Você esqueceu o link.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "⏳ Baixando vídeo...", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const data = await fetchJson(buildApiUrl('/downloads/yt-mp4', { url: resto.trim() }, obterApiKey(config)));
+            await sock.sendMessage(idChat, { video: { url: data.url }, mimetype: "video/mp4", caption: data.title || "", ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ Erro ao baixar.", ...getBotaoCanal() }, { quoted: msg }); }
     }
-
-    let dados = {};
-    try { dados = JSON.parse(fs.readFileSync(ARQ, "utf8")); } catch {}
-
-    const lista = dados[num]?.lista || [];
-    if (!lista.length) {
-      return sock.sendMessage(idChat, { text: "📭 Sua playlist tá vazia.\n\n> Use *!play* e depois *!addplaylist*." });
-    }
-
-    let txt = `📋 *SUA PLAYLIST*\n\n> Total: *${lista.length}*\n\n`;
-    lista.forEach(m => {
-      txt += `┃ *#${m.id}* — 🎵 ${m.titulo}\n`;
-    });
-    txt += `\n> Use *!rmplaylist <id>* pra remover.`;
-
-    await sock.sendMessage(idChat, {
-      text: txt,
-      mentions: [euJid]
-    });
-  }
 },
 
-// ==============================================
-// ▶️ TOCARPLAYLIST
-// ==============================================
 {
-  nome: "tocarplaylist",
-  descricao: "Toca uma música da sua playlist",
-  async executar({ sock, idChat, msg, resto, normalizarNumero }) {
-    const id = parseInt((resto || "").trim());
-    if (!id) return sock.sendMessage(idChat, { text: "❌ Uso: *!tocarplaylist <id>*\n\n> Veja sua lista com *!playlist*" });
+    nome: "play",
+    descricao: "Busca e baixa áudio",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ *Peraí!* Você não disse o nome da música.\n\n> *Exemplo:* !play MC Kevinho", ...getBotaoCanal() }, { quoted: msg });
+        
+        await sock.sendMessage(idChat, { text: `🔎 *Procurando "${resto.trim()}"...*\n\n⏳ Deixa eu vasculhar aqui!`, ...getBotaoCanal() }, { quoted: msg });
+        
+        try {
+            // Busca a chave diretamente do config se o objeto config falhar
+            let apiKey = config?.spiderKey;
+            if (!apiKey) {
+                const cfg = require('../config.js');
+                apiKey = cfg.spiderKey || cfg.SPIDER_X_API_KEY;
+            }
 
-    const euJid = msg.key.participant || msg.key.remoteJid;
-    const num = normalizarNumero(euJid);
-
-    const ARQ = path.join(__dirname, "..", "dados", "playlists.json");
-    if (!fs.existsSync(ARQ)) {
-      return sock.sendMessage(idChat, { text: "📭 Sua playlist tá vazia." });
+            const data = await fetchJson(buildApiUrl('/downloads/play-audio', { search: resto.trim() }, apiKey));
+            await sock.sendMessage(idChat, { audio: { url: data.url }, mimetype: "audio/mpeg", fileName: `${data.title || 'audio'}.mp3`, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { 
+            await sock.sendMessage(idChat, { text: "❌ Erro: " + e.message, ...getBotaoCanal() }, { quoted: msg }); 
+        }
     }
-
-    let dados = {};
-    try { dados = JSON.parse(fs.readFileSync(ARQ, "utf8")); } catch {}
-
-    const lista = dados[num]?.lista || [];
-    const musica = lista.find(m => m.id === id);
-
-    if (!musica) {
-      return sock.sendMessage(idChat, { text: `❌ Música *#${id}* não encontrada na sua playlist.` });
-    }
-
-    await sock.sendMessage(idChat, {
-      text: `▶️ Tocando *${musica.titulo}*...\n\n> 🎵 Buscando no YouTube...`
-    });
-
-    try {
-      // Busca no YouTube
-      const data = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/pesquisa_ytb?nome=${encodeURIComponent(musica.titulo)}&apikey=${API_KEY_BRONXYS}`);
-
-      if (!data || !data[0]) {
-        return sock.sendMessage(idChat, { text: "❌ Música não encontrada no YouTube." });
-      }
-
-      if (data[0]?.tempo?.length >= 7) {
-        return sock.sendMessage(idChat, { text: "⏰ Música muito grande (mais de 1h)." });
-      }
-
-      const titulo = data[0]?.titulo || musica.titulo;
-
-      // Manda a capa com info
-      await sock.sendMessage(idChat, {
-        image: { url: data[0]?.thumb },
-        caption:
-          `🎵 *${titulo}*\n` +
-          `⏱️ ${data[0]?.tempo || "?"}\n` +
-          `📀 Da sua playlist (#${id})\n\n` +
-          `⬇️ Baixando áudio...`
-      });
-
-      // Baixa e envia o áudio
-      await sock.sendMessage(idChat, {
-        audio: { url: `https://api.bronxyshost.com.br/api-bronxys/play?nome_url=${encodeURIComponent(musica.titulo)}&apikey=${API_KEY_BRONXYS}` },
-        mimetype: "audio/mpeg",
-        fileName: `${titulo}.mp3`
-      });
-
-    } catch (e) {
-      console.log("Erro tocarplaylist:", e.message);
-      await sock.sendMessage(idChat, { text: "❌ Erro ao tocar a música." });
-    }
-  }
 },
 
-    {
-      nome: "playmp4",
-      descricao: "Baixa vídeo do YouTube",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q) return sock.sendMessage(idChat, { text: `🎥 Exemplo: *!playmp4 nome*` });
-        try {
-          const data = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/pesquisa_ytb?nome=${encodeURIComponent(q)}&apikey=${API_KEY_BRONXYS}`);
-          if (!data || !data[0]) return sock.sendMessage(idChat, { text: "❌ Vídeo não encontrado." });
-          if (data[0]?.tempo?.length >= 7) return sock.sendMessage(idChat, { text: "⏰ Muito grande." });
-
-          const titulo = data[0]?.titulo || "play";
-          await sock.sendMessage(idChat, {
-            image: { url: data[0]?.thumb },
-            caption: `🎥 *${titulo}*\n⏱️ ${data[0]?.tempo}\n\nBaixando vídeo...`
-          });
-          await sock.sendMessage(idChat, {
-            video: { url: `https://api.bronxyshost.com.br/api-bronxys/play_video?nome_url=${encodeURIComponent(q)}&apikey=${API_KEY_BRONXYS}` },
-            mimetype: "video/mp4",
-            fileName: `${titulo}.mp4`
-          });
-        } catch (e) {
-          console.log("Erro playmp4:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Não consegui baixar o vídeo." });
-        }
-      }
-    },
-
-    {
-      nome: "playdoc",
-      descricao: "Baixa música como documento",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q) return sock.sendMessage(idChat, { text: `📄 Exemplo: *!playdoc nome*` });
-        try {
-          const data = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/pesquisa_ytb?nome=${encodeURIComponent(q)}&apikey=${API_KEY_BRONXYS}`);
-          if (!data || !data[0]) return sock.sendMessage(idChat, { text: "❌ Não encontrado." });
-          const titulo = data[0]?.titulo || "play";
-          await sock.sendMessage(idChat, {
-            document: { url: `https://api.bronxyshost.com.br/api-bronxys/play?nome_url=${encodeURIComponent(q)}&apikey=${API_KEY_BRONXYS}` },
-            mimetype: "audio/mpeg",
-            fileName: `${titulo}.mp3`
-          });
-        } catch (e) {
-          console.log("Erro playdoc:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar documento." });
-        }
-      }
-    },
-
-    {
-      nome: "spotify",
-      descricao: "Baixa música do Spotify",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q.includes("spotify")) return sock.sendMessage(idChat, { text: `🎵 Exemplo: *!spotify https://open.spotify.com/track/...*` });
-        try {
-          await sock.sendMessage(idChat, { audio: { url: `https://api.bronxyshost.com.br/api-bronxys/spotify?url=${q}&apikey=${API_KEY_BRONXYS}` }, mimetype: "audio/mpeg" });
-        } catch (e) {
-          console.log("Erro spotify:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar do Spotify." });
-        }
-      }
-    },
-
-    {
-      nome: "soundcloud",
-      descricao: "Baixa música do SoundCloud",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q.includes("soundcloud")) return sock.sendMessage(idChat, { text: `🎵 Exemplo: *!soundcloud link*` });
-        try {
-          await sock.sendMessage(idChat, { audio: { url: `https://api.bronxyshost.com.br/api-bronxys/soundcloud?url=${q}&apikey=${API_KEY_BRONXYS}` }, mimetype: "audio/mpeg" });
-        } catch (e) {
-          console.log("Erro soundcloud:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar do SoundCloud." });
-        }
-      }
-    },
-
-    {
-      nome: "letra",
-      descricao: "Busca letra de música",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q) return sock.sendMessage(idChat, { text: `🎵 Exemplo: *!letra nome da música*` });
-        try {
-          const abc = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/letra_musica?letra=${encodeURIComponent(q)}&apikey=${API_KEY_BRONXYS}`);
-          if (!abc || !abc.letra) return sock.sendMessage(idChat, { text: "❌ Letra não encontrada." });
-          await sock.sendMessage(idChat, { text: `🎵 *${abc.titulo}*\n👤 ${abc.compositor}\n\n${abc.letra}`.slice(0, 4000) });
-        } catch (e) {
-          console.log("Erro letra:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao buscar letra." });
-        }
-      }
-    },
-
-    // ==============================================
-    // 🎬 VÍDEOS
-    // ==============================================
-    {
-      nome: "tiktok_video",
-      descricao: "Baixa vídeo do TikTok",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q.includes("tiktok")) return sock.sendMessage(idChat, { text: `🎬 Exemplo: *!tiktok_video link*` });
-        try {
-          await sock.sendMessage(idChat, { video: { url: `https://api.bronxyshost.com.br/api-bronxys/tiktok?url=${q}&apikey=${API_KEY_BRONXYS}` }, mimetype: "video/mp4" });
-        } catch (e) {
-          console.log("Erro tiktok_video:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar do TikTok." });
-        }
-      }
-    },
-
-    {
-      nome: "tiktok_audio",
-      descricao: "Baixa áudio do TikTok",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q.includes("tiktok")) return sock.sendMessage(idChat, { text: `🎵 Exemplo: *!tiktok_audio link*` });
-        try {
-          await sock.sendMessage(idChat, { audio: { url: `https://api.bronxyshost.com.br/api-bronxys/tiktok?url=${q}&apikey=${API_KEY_BRONXYS}` }, mimetype: "audio/mpeg" });
-        } catch (e) {
-          console.log("Erro tiktok_audio:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar áudio do TikTok." });
-        }
-      }
-    },
-
-    {
-      nome: "instagram",
-      descricao: "Baixa do Instagram",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (q.length < 5) return sock.sendMessage(idChat, { text: `📷 Exemplo: *!instagram link*` });
-        try {
-          const ABC = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/instagram?url=${q}&apikey=${API_KEY_BRONXYS}`);
-          if (!ABC?.msg?.[0]?.url) return sock.sendMessage(idChat, { text: "❌ Não consegui extrair do Instagram." });
-          const tipo = ABC.msg[0].type;
-          const A_T = tipo === "mp4" ? "video/mp4" : tipo === "webp" ? "image/webp" : tipo === "jpg" ? "image/jpeg" : tipo === "mp3" ? "audio/mpeg" : "video/mp4";
-          await sock.sendMessage(idChat, { [A_T.split("/")[0]]: { url: ABC.msg[0].url }, mimetype: A_T });
-        } catch (e) {
-          console.log("Erro instagram:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar do Instagram." });
-        }
-      }
-    },
-
-    {
-      nome: "face_video",
-      descricao: "Baixa vídeo do Facebook",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q.includes("facebook") && !q.includes("fb.watch")) return sock.sendMessage(idChat, { text: `📘 Exemplo: *!face_video link*` });
-        try {
-          await sock.sendMessage(idChat, { video: { url: `https://api.bronxyshost.com.br/api-bronxys/face_video?url=${q}&apikey=${API_KEY_BRONXYS}` }, mimetype: "video/mp4" });
-        } catch (e) {
-          console.log("Erro face_video:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar do Facebook." });
-        }
-      }
-    },
-
-    {
-      nome: "face_audio",
-      descricao: "Baixa áudio do Facebook",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q.includes("facebook") && !q.includes("fb.watch")) return sock.sendMessage(idChat, { text: `🎵 Exemplo: *!face_audio link*` });
-        try {
-          await sock.sendMessage(idChat, { audio: { url: `https://api.bronxyshost.com.br/api-bronxys/face_audio?url=${q}&apikey=${API_KEY_BRONXYS}` }, mimetype: "audio/mpeg" });
-        } catch (e) {
-          console.log("Erro face_audio:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar áudio do Facebook." });
-        }
-      }
-    },
-
-    {
-      nome: "twitter_video",
-      descricao: "Baixa vídeo do Twitter",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q.includes("twitter")) return sock.sendMessage(idChat, { text: `🐦 Exemplo: *!twitter_video link*` });
-        try {
-          await sock.sendMessage(idChat, { video: { url: `https://api.bronxyshost.com.br/api-bronxys/twitter_video?url=${q}&apikey=${API_KEY_BRONXYS}` }, mimetype: "video/mp4" });
-        } catch (e) {
-          console.log("Erro twitter_video:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar do Twitter." });
-        }
-      }
-    },
-
-    {
-      nome: "twitter_audio",
-      descricao: "Baixa áudio do Twitter",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q.includes("twitter")) return sock.sendMessage(idChat, { text: `🎵 Exemplo: *!twitter_audio link*` });
-        try {
-          await sock.sendMessage(idChat, { audio: { url: `https://api.bronxyshost.com.br/api-bronxys/twitter_audio?url=${q}&apikey=${API_KEY_BRONXYS}` }, mimetype: "audio/mpeg" });
-        } catch (e) {
-          console.log("Erro twitter_audio:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar áudio do Twitter." });
-        }
-      }
-    },
-
-    {
-      nome: "kwai",
-      descricao: "Baixa vídeo do Kwai",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q.includes("kwai")) return sock.sendMessage(idChat, { text: `🎬 Exemplo: *!kwai link*` });
-        try {
-          await sock.sendMessage(idChat, { video: { url: `https://api.bronxyshost.com.br/api-bronxys/kwai?url=${q}&apikey=${API_KEY_BRONXYS}` }, mimetype: "video/mp4" });
-        } catch (e) {
-          console.log("Erro kwai:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar do Kwai." });
-        }
-      }
-    },
-
-    {
-      nome: "threads",
-      descricao: "Baixa do Threads",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q.includes("threads.net")) return sock.sendMessage(idChat, { text: `🧵 Exemplo: *!threads link*` });
-        try {
-          await sock.sendMessage(idChat, { video: { url: `https://api.bronxyshost.com.br/api-bronxys/threads?url=${q}&apikey=${API_KEY_BRONXYS}` } });
-        } catch (e) {
-          console.log("Erro threads:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar do Threads." });
-        }
-      }
-    },
-
-    {
-      nome: "mediafire",
-      descricao: "Baixa arquivo do Mediafire",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q.includes("mediafire.com")) return sock.sendMessage(idChat, { text: `📦 Exemplo: *!mediafire link*` });
-        try {
-          const ABC = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/mediafire?url=${q}&apikey=${API_KEY_BRONXYS}`);
-          if (!ABC?.resultado?.[0]) return sock.sendMessage(idChat, { text: "❌ Não consegui extrair." });
-          await sock.sendMessage(idChat, {
-            document: { url: ABC.resultado[0].link },
-            mimetype: "application/" + ABC.resultado[0].mime,
-            fileName: ABC.resultado[0].nama
-          });
-        } catch (e) {
-          console.log("Erro mediafire:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar do Mediafire." });
-        }
-      }
-    },
-
-    {
-      nome: "ifunny",
-      descricao: "Baixa vídeo do iFunny",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q) return sock.sendMessage(idChat, { text: `🎬 Exemplo: *!ifunny link*` });
-        try {
-          await sock.sendMessage(idChat, { video: { url: `https://api.bronxyshost.com.br/api-bronxys/ifunny?url=${q}&apikey=${API_KEY_BRONXYS}` }, mimetype: "video/mp4" });
-        } catch (e) {
-          console.log("Erro ifunny:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar do iFunny." });
-        }
-      }
-    },
-
-    // ==============================================
-    // 🔍 PESQUISAS
-    // ==============================================
-    {
-      nome: "pesquisa_yt",
-      descricao: "Pesquisa no YouTube",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q) return sock.sendMessage(idChat, { text: `🔍 Exemplo: *!pesquisa_yt nome*` });
-        try {
-          const AB = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/pesquisa_ytb?nome=${encodeURIComponent(q)}&apikey=${API_KEY_BRONXYS}`);
-          if (!AB?.length) return sock.sendMessage(idChat, { text: "❌ Nada encontrado." });
-          let texto = "";
-          for (const i of AB) texto += `🎬 *${i.titulo}*\n🔗 ${i.url}\n⏱️ ${i.tempo}\n\n`;
-          await sock.sendMessage(idChat, { text: texto.slice(0, 4000) });
-        } catch (e) {
-          console.log("Erro pesquisa_yt:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro na pesquisa." });
-        }
-      }
-    },
-
-    {
-      nome: "gimage",
-      descricao: "Pesquisa imagem no Google",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q) return sock.sendMessage(idChat, { text: `🖼️ Exemplo: *!gimage naruto*` });
-        try {
-          const ABC = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/google-img?nome=${encodeURIComponent(q)}&apikey=${API_KEY_BRONXYS}`);
-          if (!Array.isArray(ABC) || !ABC.length) return sock.sendMessage(idChat, { text: "❌ Nenhuma imagem encontrada." });
-          await sock.sendMessage(idChat, { image: { url: ABC[Math.floor(Math.random() * ABC.length)].url } });
-        } catch (e) {
-          console.log("Erro gimage:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Não consegui buscar imagem." });
-        }
-      }
-    },
-
-// ==============================================
-// 📌 PINTEREST (Obanai API)
-// ==============================================
 {
-  nome: "pinterest",
-  descricao: "Busca imagens no Pinterest",
-  async executar({ sock, idChat, msg, resto }) {
-    const q = (resto || "").trim();
-    if (!q) {
-      return sock.sendMessage(idChat, { text: `📌 *ᴜsᴏ:* !pinterest2 <pesquisa>` });
-    }
-
-    await sock.sendMessage(idChat, { text: "🔍 *ʙᴜsᴄᴀɴᴅᴏ ɪᴍᴀɢᴇɴs...*" });
-
-    try {
-      const r = await axios.get(
-        `https://obanai-apis.eu.cc/api/dl/pinterest?q=${encodeURIComponent(q)}&apitoken=rj8SpI`
-      );
-      const data = r.data;
-
-      if (!data.success || !data.data || data.data.length === 0) {
-        return sock.sendMessage(idChat, { text: "❌ *ɴᴇɴʜᴜᴍᴀ ɪᴍᴀɢᴇᴍ ᴇɴᴄᴏɴᴛʀᴀᴅᴀ.*" });
-      }
-
-      const pushname = msg.pushName || "Usuário";
-      const remetente = msg.key.participant || msg.key.remoteJid;
-
-      for (const item of data.data.slice(0, 5)) {
+    nome: "playvd",
+    descricao: "Busca e baixa vídeo",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ *Epa!* Cadê o nome do vídeo?", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: `🔎 Buscando "${resto.trim()}"...`, ...getBotaoCanal() }, { quoted: msg });
         try {
-          const img = await axios.get(item.image, { responseType: "arraybuffer" });
-          await sock.sendMessage(idChat, {
-            image: Buffer.from(img.data),
-            caption: `📌 *${item.title || "Sem título"}*\n👤 ${pushname}`,
-            mentions: [remetente]
-          });
-          await new Promise(r => setTimeout(r, 500));
-        } catch (e) {
-          console.error("[ERRO ENVIO PINTEREST]:", e.message);
-        }
-      }
-    } catch (e) {
-      console.error("[ERRO PINTEREST2]:", e.message);
-      await sock.sendMessage(idChat, { text: "❌ *ᴇʀʀᴏ ᴀᴏ ʙᴜsᴄᴀʀ ɪᴍᴀɢᴇɴs.*" });
+            const data = await fetchJson(buildApiUrl('/downloads/play-video', { search: resto.trim() }, obterApiKey(config)));
+            await sock.sendMessage(idChat, { video: { url: data.url }, mimetype: "video/mp4", caption: data.title || "", ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: `❌ Nada encontrado.`, ...getBotaoCanal() }, { quoted: msg }); }
     }
-  }
 },
-    {
-      nome: "print",
-      descricao: "Print de um site",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q) return sock.sendMessage(idChat, { text: `📸 Exemplo: *!print https://google.com*` });
+{
+    nome: "tiktok",
+    descricao: "Baixa vídeo do TikTok",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ *Uai!* Cadê o link?", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "🎵 Analisando o TikTok...", ...getBotaoCanal() }, { quoted: msg });
         try {
-          await sock.sendMessage(idChat, { image: { url: `https://api.bronxyshost.com.br/api-bronxys/print_de_site?url=${q}&apikey=${API_KEY_BRONXYS}` } });
-        } catch (e) {
-          console.log("Erro print:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao tirar print." });
-        }
-      }
-    },
-
-    {
-      nome: "playstore",
-      descricao: "Pesquisa apps na Play Store",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (q.length < 2) return sock.sendMessage(idChat, { text: `🛒 Exemplo: *!playstore whatsapp*` });
-        try {
-          const data = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/playstore?nome=${encodeURIComponent(q)}&apikey=${API_KEY_BRONXYS}`);
-          if (!data?.resultados?.length) return sock.sendMessage(idChat, { text: "❌ Nada encontrado." });
-          let ABC = "🛒 *Play Store:*\n\n";
-          for (const a of data.resultados) ABC += `📱 *${a.title}*\n🆔 ${a.appId}\n🔗 ${a.url}\n\n`;
-          await sock.sendMessage(idChat, { text: ABC.slice(0, 4000) });
-        } catch (e) {
-          console.log("Erro playstore:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro na pesquisa." });
-        }
-      }
-    },
-
-    {
-      nome: "amazon",
-      descricao: "Pesquisa na Amazon",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (q.length < 4) return sock.sendMessage(idChat, { text: `🛒 Exemplo: *!amazon fone*` });
-        try {
-          const ABC = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/Amazon_Pesquisa?pesquisa=${encodeURIComponent(q)}&apikey=${API_KEY_BRONXYS}`);
-          if (!ABC?.length) return sock.sendMessage(idChat, { text: "❌ Nada encontrado." });
-          let RST = "🛒 *Amazon:*\n\n";
-          for (let i = 0; i < Math.min(40, ABC.length); i++) RST += `(${i + 1}) *${ABC[i].titulo}*\n💰 ${ABC[i].preco}\n🔗 ${ABC[i].url}\n\n`;
-          await sock.sendMessage(idChat, { text: RST.slice(0, 4000) });
-        } catch (e) {
-          console.log("Erro amazon:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro na pesquisa." });
-        }
-      }
-    },
-
-    {
-      nome: "aptoide_pesquisa",
-      descricao: "Pesquisa apps no Aptoide",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q) return sock.sendMessage(idChat, { text: `📱 Exemplo: *!aptoide_pesquisa whatsapp*` });
-        try {
-          const abc = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/aptoide_pesquisa?pesquisa=${encodeURIComponent(q)}&apikey=${API_KEY_BRONXYS}`);
-          await sock.sendMessage(idChat, { text: (abc.aptoide || "❌ Nada encontrado.").slice(0, 4000) });
-        } catch (e) {
-          console.log("Erro aptoide_pesquisa:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro na pesquisa." });
-        }
-      }
-    },
-
-    {
-      nome: "aptoide",
-      descricao: "Baixa APK do Aptoide",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q.includes("aptoide.com")) return sock.sendMessage(idChat, { text: `📱 Exemplo: *!aptoide link*` });
-        try {
-          const abc = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/aptoide?url=${q}&apikey=${API_KEY_BRONXYS}`);
-          if (!abc?.link) return sock.sendMessage(idChat, { text: "❌ Não consegui extrair." });
-          await sock.sendMessage(idChat, {
-            document: { url: abc.link },
-            mimetype: "application/vnd.android.package-archive",
-            fileName: abc.titulo || "app.apk"
-          });
-        } catch (e) {
-          console.log("Erro aptoide:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao baixar APK." });
-        }
-      }
-    },
-
-    {
-      nome: "gruposwhatsapp",
-      descricao: "Lista de grupos WhatsApp",
-      async executar({ sock, idChat }) {
-        try {
-          const abcd = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/gruposwhatsapp?apikey=${API_KEY_BRONXYS}`);
-          if (!abcd?.length) return sock.sendMessage(idChat, { text: "❌ Nada encontrado." });
-          let gps = "📱 *Grupos WhatsApp:*\n\n";
-          for (const g of abcd) gps += `📌 *${g.titulo}*\n📜 ${g.regras}\n🔗 ${g.link}\n\n`;
-          await sock.sendMessage(idChat, { text: gps.slice(0, 4000) });
-        } catch (e) {
-          console.log("Erro gruposwhatsapp:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao buscar grupos." });
-        }
-      }
-    },
-
-    // ==============================================
-    // 📊 INFORMAÇÕES
-    // ==============================================
-    {
-      nome: "tabelacamp",
-      descricao: "Tabela do Campeonato Brasileiro",
-      async executar({ sock, idChat }) {
-        try {
-          const abc = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/tabela_camp?apikey=${API_KEY_BRONXYS}`);
-          if (!abc?.length) return sock.sendMessage(idChat, { text: "❌ Nada encontrado." });
-          let rst = "🏆 *Brasileirão:*\n\n";
-          for (let i = 0; i < abc.length; i++) {
-            rst += `(${i + 1}º) *${abc[i].time}*\n🎯 ${abc[i].pontos} pts | 🎮 ${abc[i].jogos} J\n✅ ${abc[i].vitorias} | 🤝 ${abc[i].empates} | ❌ ${abc[i].derrotas}\n\n`;
-          }
-          await sock.sendMessage(idChat, { text: rst.slice(0, 4000) });
-        } catch (e) {
-          console.log("Erro tabelacamp:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao buscar tabela." });
-        }
-      }
-    },
-
-    {
-      nome: "moedas",
-      descricao: "Cotações de moedas",
-      async executar({ sock, idChat }) {
-        try {
-          const ABC = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/Moedas_Agora?apikey=${API_KEY_BRONXYS}`);
-          if (!ABC) return sock.sendMessage(idChat, { text: "❌ Nada encontrado." });
-          await sock.sendMessage(idChat, { text: `💰 *COTAÇÕES:*\n\n${ABC?.dolar}\n\n${ABC?.euro}\n\n${ABC?.libra}\n\n${ABC?.bitcoin}\n\n${ABC?.ethereum}\n\n${ABC?.bovespa}\n\n${ABC?.ouro}` });
-        } catch (e) {
-          console.log("Erro moedas:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao buscar cotações." });
-        }
-      }
-    },
-
-    {
-      nome: "cep",
-      descricao: "Consulta CEP",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim().replace(/\D/g, "");
-        if (!q) return sock.sendMessage(idChat, { text: `📮 Exemplo: *!cep 51240230*` });
-        try {
-          const ABC = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/consultacep?cep=${q}&apikey=${API_KEY_BRONXYS}`);
-          if (!ABC?.cep) return sock.sendMessage(idChat, { text: "❌ CEP não encontrado." });
-          await sock.sendMessage(idChat, { text: `📮 *CEP ${ABC.cep}*\n\n🏠 ${ABC.rua}\n🏘️ ${ABC.vizinhança}\n🌆 ${ABC.cidade} - ${ABC.estado}\n📞 DDD: ${ABC.ddd}` });
-        } catch (e) {
-          console.log("Erro cep:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao consultar CEP." });
-        }
-      }
-    },
-
-    {
-      nome: "signo",
-      descricao: "Horóscopo do signo",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q) return sock.sendMessage(idChat, { text: `♈ Exemplo: *!signo virgem*` });
-        try {
-          const ABC = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/horoscopo?signo=${q}&apikey=${API_KEY_BRONXYS}`);
-          if (!ABC?.body) return sock.sendMessage(idChat, { text: "❌ Signo não encontrado." });
-          await sock.sendMessage(idChat, { image: { url: ABC.img }, caption: `♈ *${q}*\n\n${ABC.title}\n${ABC.body}` });
-        } catch (e) {
-          console.log("Erro signo:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao buscar horóscopo." });
-        }
-      }
-    },
-
-    {
-      nome: "celular",
-      descricao: "Info sobre celular",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q) return sock.sendMessage(idChat, { text: `📱 Exemplo: *!celular galaxy a9*` });
-        try {
-          const ABC = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/info_celular?celular=${encodeURIComponent(q)}&apikey=${API_KEY_BRONXYS}`);
-          if (!ABC?.celular) return sock.sendMessage(idChat, { text: "❌ Não encontrado." });
-          await sock.sendMessage(idChat, { text: `📱 *${ABC.celular}*\n\n${ABC.resumo || ABC.infoc || "N/E"}`.slice(0, 4000) });
-        } catch (e) {
-          console.log("Erro celular:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro na pesquisa." });
-        }
-      }
-    },
-
-    {
-      nome: "esportenoticias",
-      descricao: "Notícias de esportes",
-      async executar({ sock, idChat }) {
-        try {
-          const ABC = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/esporte_noticias?apikey=${API_KEY_BRONXYS}`);
-          if (!ABC?.length) return sock.sendMessage(idChat, { text: "❌ Nada encontrado." });
-          let AB = "";
-          for (let i = 1; i < ABC.length; i++) AB += `📰 ${ABC[i].titulo}\n\n`;
-          await sock.sendMessage(idChat, { image: { url: ABC[0].img }, caption: AB.slice(0, 4000) });
-        } catch (e) {
-          console.log("Erro esportenoticias:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao buscar notícias." });
-        }
-      }
-    },
-
-    // ==============================================
-    // 🤖 IA
-    // ==============================================
-    {
-      nome: "gpt",
-      descricao: "Pergunta pro GPT",
-      async executar({ sock, idChat, resto }) {
-        const q = (resto || "").trim();
-        if (!q) return sock.sendMessage(idChat, { text: `🤖 Exemplo: *!pergunta sua pergunta*` });
-        try {
-          await sock.sendMessage(idChat, { text: "🤖 Pensando..." });
-          const ABC = await fetchJson(`https://api.bronxyshost.com.br/api-bronxys/PERGUNTE_E_EU_RESPONDO?q=${encodeURIComponent(q)}&apikey=${API_KEY_BRONXYS}`);
-          if (!ABC?.msg) return sock.sendMessage(idChat, { text: "❌ A IA não respondeu." });
-          await sock.sendMessage(idChat, { text: `🤖 ${ABC.msg}`.slice(0, 4000) });
-        } catch (e) {
-          console.log("Erro pergunta:", e.message);
-          await sock.sendMessage(idChat, { text: "❌ Erro ao consultar a IA." });
-        }
-      }
+            const data = await fetchJson(buildApiUrl('/downloads/tik-tok', { url: resto.trim() }, obterApiKey(config)));
+            await sock.sendMessage(idChat, { video: { url: data.download_link }, mimetype: "video/mp4", ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ Erro ao baixar.", ...getBotaoCanal() }, { quoted: msg }); }
     }
-  ]
+},
+{
+    nome: "tiktokaudio",
+    descricao: "Baixa áudio do TikTok",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ *Oxe!* Envie o link.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "🎵 Extraindo áudio...", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const data = await fetchJson(buildApiUrl('/downloads/tik-tok-audio', { url: resto.trim() }, obterApiKey(config)));
+            await sock.sendMessage(idChat, { audio: { url: data.download_link }, mimetype: "audio/mpeg", ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ Erro ao baixar.", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "insta",
+    descricao: "Baixa mídia do Instagram",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ *Oxe!* Envie o link.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "📸 Analisando o Instagram...", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const data = await fetchJson(buildApiUrl('/downloads/instagram', { url: resto.trim() }, obterApiKey(config)));
+            const mediaUrl = data.url || data.thumb;
+            if (!mediaUrl) throw new Error("Mídia não encontrada.");
+            await sock.sendMessage(idChat, { video: { url: mediaUrl }, mimetype: "video/mp4", caption: data.title || "", ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ Não consegui baixar.", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "face",
+    descricao: "Baixa vídeo do Facebook",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ *Eita!* Envie o link.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "📥 Baixando Facebook...", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const data = await fetchJson(buildApiUrl('/downloads/facebook', { url: resto.trim() }, obterApiKey(config)));
+            await sock.sendMessage(idChat, { video: { url: data.url }, mimetype: "video/mp4", ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ Erro ao baixar.", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "x",
+    descricao: "Baixa mídia do X/Twitter",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ *Manda o link!*", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "🐦 Baixando do X...", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const data = await fetchJson(buildApiUrl('/downloads/x-twitter', { url: resto.trim() }, obterApiKey(config)));
+            await sock.sendMessage(idChat, { video: { url: data.url }, mimetype: "video/mp4", ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ Erro ao baixar.", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "pinterest",
+    descricao: "Busca imagens no Pinterest",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ O que você quer buscar?", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "🔎 Buscando no Pinterest...", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const data = await fetchJson(buildApiUrl('/downloads/pinterest', { search: resto.trim() }, obterApiKey(config)));
+            if (!data || data.length === 0) throw new Error();
+            for (const item of data) {
+                await sock.sendMessage(idChat, { image: { url: item.url }, caption: `Pinterest: ${resto.trim()}`, ...getBotaoCanal() }, { quoted: msg });
+                await new Promise(r => setTimeout(r, 500));
+            }
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ Nada encontrado.", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "ytpesquisa",
+    descricao: "Pesquisa no YouTube",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Digite o que quer buscar.", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const data = await fetchJson(buildApiUrl('/search/youtube', { search: resto.trim() }, obterApiKey(config)));
+            const list = data.slice(0, 5).map((item, i) => `${i + 1}. ${item.title}\n${item.url}`).join("\n\n");
+            await sock.sendMessage(idChat, { text: `🔍 *Resultados:*\n\n${list || "Nada encontrado."}`, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *Erro ao pesquisar.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+
+{
+    nome: "bolsonaro",
+    descricao: "Montagem Bolsonaro",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Envie o link da imagem.", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const url = buildApiUrl('/canvas/bolsonaro', { image_url: resto.trim() }, obterApiKey(config));
+            await sock.sendMessage(idChat, { image: { url }, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *Erro ao gerar imagem.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "jail",
+    descricao: "Efeito de grade",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Envie o link da imagem.", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const url = buildApiUrl('/canvas/jail', { image_url: resto.trim() }, obterApiKey(config));
+            await sock.sendMessage(idChat, { image: { url }, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *Erro ao gerar imagem.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "invert",
+    descricao: "Inverte as cores",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Envie o link da imagem.", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const url = buildApiUrl('/canvas/invert', { image_url: resto.trim() }, obterApiKey(config));
+            await sock.sendMessage(idChat, { image: { url }, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *Erro ao gerar imagem.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "rip",
+    descricao: "Efeito de luto",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Envie o link da imagem.", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const url = buildApiUrl('/canvas/rip', { image_url: resto.trim() }, obterApiKey(config));
+            await sock.sendMessage(idChat, { image: { url }, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *Erro ao gerar imagem.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "welcome",
+    descricao: "Cria imagem de boas-vindas",
+    async executar({ sock, idChat, msg, resto, config }) {
+        const [title, description, imageUrl] = (resto || "").split('|').map(i => i.trim());
+        if (!title || !description) return sock.sendMessage(idChat, { text: "❌ Use: titulo|descricao|url(opcional)", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const url = buildApiUrl('/canvas/welcome', { title, description, image_url: imageUrl || undefined }, obterApiKey(config));
+            await sock.sendMessage(idChat, { image: { url }, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *Erro ao gerar welcome.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "goodbye",
+    descricao: "Cria imagem de despedida",
+    async executar({ sock, idChat, msg, resto, config }) {
+        const [title, description, imageUrl] = (resto || "").split('|').map(i => i.trim());
+        if (!title || !description) return sock.sendMessage(idChat, { text: "❌ Use: titulo|descricao|url(opcional)", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const url = buildApiUrl('/canvas/goodbye', { title, description, image_url: imageUrl || undefined }, obterApiKey(config));
+            await sock.sendMessage(idChat, { image: { url }, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *Erro ao gerar goodbye.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "attp",
+    descricao: "Sticker animado de texto",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Digite o texto.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "✨ *Criando figurinha...*", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const url = buildApiUrl('/stickers/attp', { text: resto.trim() }, obterApiKey(config));
+            await sock.sendMessage(idChat, { image: { url }, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *Erro ao criar figurinha.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "ttp",
+    descricao: "Sticker de texto",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Digite o texto.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "✨ *Criando figurinha...*", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const url = buildApiUrl('/stickers/ttp', { text: resto.trim() }, obterApiKey(config));
+            await sock.sendMessage(idChat, { image: { url }, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *Erro ao criar figurinha.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "brat",
+    descricao: "Sticker estilo Brat",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Digite o texto.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "✨ *Criando figurinha Brat...*", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const url = buildApiUrl('/stickers/brat', { text: resto.trim() }, obterApiKey(config));
+            await sock.sendMessage(idChat, { image: { url }, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *Erro ao criar figurinha.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "abrat",
+    descricao: "Sticker animado Brat",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Digite o texto.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "✨ *Criando figurinha animada...*", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const url = buildApiUrl('/stickers/abrat', { text: resto.trim() }, obterApiKey(config));
+            await sock.sendMessage(idChat, { video: { url }, gifPlayback: true, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *Erro ao criar figurinha.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+
+{
+    nome: "flux",
+    descricao: "Gera imagem com IA",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Descreva o que quer gerar.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "🎨 *Gerando imagem...*", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const data = await fetchJson(buildApiUrl('/ai/flux', { text: resto.trim() }, obterApiKey(config)));
+            await sock.sendMessage(idChat, { image: { url: data.image }, caption: `🖼️ Prompt: ${resto.trim()}`, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *Erro ao gerar imagem.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "gemini",
+    descricao: "IA Gemini",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Digite a pergunta.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "🧠 *Consultando o Gemini...*", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const data = await postJson(buildApiUrl('/ai/gemini', {}, obterApiKey(config)), { text: resto.trim() });
+            await sock.sendMessage(idChat, { text: `🤖 *Resposta do Gemini:*\n\n${data.response || "Sem resposta."}`, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *A IA não respondeu.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "gpt5",
+    descricao: "IA GPT-5",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Digite a pergunta.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "🧠 *Consultando o GPT-5...*", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const data = await postJson(buildApiUrl('/ai/gpt-5-mini', {}, obterApiKey(config)), { text: resto.trim() });
+            await sock.sendMessage(idChat, { text: `🤖 *Resposta do GPT-5:*\n\n${data.response || "Sem resposta."}`, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *A IA não respondeu.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "deepseek",
+    descricao: "IA DeepSeek",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Digite a pergunta.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "🧠 *Consultando o DeepSeek...*", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const data = await postJson(buildApiUrl('/ai/deepseek-v4-flash', {}, obterApiKey(config)), { text: resto.trim() });
+            await sock.sendMessage(idChat, { text: `🤖 *Resposta do DeepSeek:*\n\n${data.response || "Sem resposta."}`, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *A IA não respondeu.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "haiku",
+    descricao: "IA Claude Haiku",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Digite a pergunta.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "🧠 *Consultando o Claude...*", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const data = await postJson(buildApiUrl('/ai/claude-haiku-5-5', {}, obterApiKey(config)), { text: resto.trim() });
+            await sock.sendMessage(idChat, { text: `🤖 *Resposta do Claude:*\n\n${data.response || "Sem resposta."}`, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *A IA não respondeu.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "tts",
+    descricao: "Texto para áudio (vozes)",
+    async executar({ sock, idChat, msg, resto, config }) {
+        if (!resto) return sock.sendMessage(idChat, { text: "❌ Use: !tts Ola, tudo bem? | joao", ...getBotaoCanal() }, { quoted: msg });
+        const rawTts = resto.trim();
+        const [ttsText, ttsVoiceRaw] = rawTts.includes("|") ? rawTts.split("|").map(p => p.trim()) : [rawTts, "joao"];
+        const ttsVoice = (ttsVoiceRaw || "joao").toLowerCase();
+        await sock.sendMessage(idChat, { text: "🔊 *Gerando áudio...*", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const data = await postJson(buildApiUrl("/ai/tts", {}, obterApiKey(config)), { text: ttsText, voice: ttsVoice });
+            await sock.sendMessage(idChat, { audio: { url: data.url }, mimetype: "audio/mpeg", ptt: true, fileName: "tts.mp3", ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { await sock.sendMessage(idChat, { text: "❌ *Erro ao gerar áudio.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "whisper",
+    descricao: "Transcreve áudio para texto",
+    async executar({ sock, idChat, msg, config, downloadMediaMessage }) {
+        const isQuotedAudio = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.audioMessage;
+        const isAudio = msg.message?.audioMessage;
+        if (!isAudio && !isQuotedAudio) return sock.sendMessage(idChat, { text: "❌ Marque um áudio para transcrever.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "🎙️ *Transcrevendo áudio...*", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const message = isQuotedAudio ? msg.message.extendedTextMessage.contextInfo.quotedMessage.audioMessage : msg.message.audioMessage;
+            const buffer = await downloadMediaMessage({ key: { id: isQuotedAudio ? msg.message.extendedTextMessage.contextInfo.stanzaId : msg.key.id }, message: message }, 'buffer', {});
+            const form = new FormData();
+            form.append('audio', buffer, { filename: 'audio.mp3', contentType: 'audio/mpeg' });
+            const data = await postForm(buildApiUrl("/ai/whisper-v3-turbo", {}, obterApiKey(config)), form);
+            await sock.sendMessage(idChat, { text: `📝 *Transcrição:*\n\n${data.transcription || "Nada encontrado."}`, ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { console.log(e); await sock.sendMessage(idChat, { text: " ❌ *Erro ao transcrever.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+},
+{
+    nome: "removebg",
+    descricao: "Remove fundo da imagem",
+    async executar({ sock, idChat, msg, config, downloadMediaMessage }) {
+        const isQuotedImage = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage;
+        const isImage = msg.message?.imageMessage;
+        if (!isImage && !isQuotedImage) return sock.sendMessage(idChat, { text: "❌ Marque uma imagem.", ...getBotaoCanal() }, { quoted: msg });
+        await sock.sendMessage(idChat, { text: "🪄 *Removendo fundo...*", ...getBotaoCanal() }, { quoted: msg });
+        try {
+            const message = isQuotedImage ? msg.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage : msg.message.imageMessage;
+            const buffer = await downloadMediaMessage({ key: { id: isQuotedImage ? msg.message.extendedTextMessage.contextInfo.stanzaId : msg.key.id }, message: message }, 'buffer', {});
+            const form = new FormData();
+            form.append('image', buffer, { filename: 'imagem.jpg', contentType: 'image/jpeg' });
+            const pngBuffer = await postFormBuffer(buildApiUrl("/removebg", {}, obterApiKey(config)), form);
+            await sock.sendMessage(idChat, { image: pngBuffer, mimetype: "image/png", fileName: "sem-fundo.png", ...getBotaoCanal() }, { quoted: msg });
+        } catch (e) { console.log(e); await sock.sendMessage(idChat, { text: " ❌ *Erro ao remover fundo.*", ...getBotaoCanal() }, { quoted: msg }); }
+    }
+}
+    ]
 };

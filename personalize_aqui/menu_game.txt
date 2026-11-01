@@ -1,20 +1,15 @@
-╭─〔 🎲 JOGOS RÁPIDOS 〕
-┃
-┃ 🔮◗ {PREFIXO}ppt pedra/papel/tesoura
-┃ 🔮◗ {PREFIXO}pais
-┃ 🔮◗ {PREFIXO}quiz
-┃ 🔮◗ {PREFIXO}quemsoueu
-╰━━━━━━━━━━━━━━╯
+»»———— 🎲 *JOGOS RÁPIDOS* ————««
+┆▒⃝꙰🔮!ppt pedra/papel/tesoura
+┆▒⃝꙰🔮!pais
+┆▒⃝꙰🔮!quiz
+┆▒⃝꙰🔮!quemsoueu
 
-╭─〔 🔤 DESAFIOS DE PALAVRAS 〕
-┃
-┃ 🪻◗ {PREFIXO}forca
-┃ 🪻◗ {PREFIXO}adedonha
-┃ 🪻◗ {PREFIXO}cacapalavras <palavra>
-╰━━━━━━━━━━━━━━╯
+»»———— 🔤 *DESAFIOS DE PALAVRAS* ————««
+┆▒⃝꙰🪻!forca
+┆▒⃝꙰🪻!adedonha
+┆▒⃝꙰🪻!cacapalavras <palavra>
 
-╭─〔 ♟️ JOGOS DE TABULEIRO 〕
-┃
-┃ 💜◗ {PREFIXO}velha <l> <c>
-┃ 💜◗ {PREFIXO}conecta4 <coluna>
-╰━━━━━━━━━━━━━━╯
+»»———— ♟️ *JOGOS DE TABULEIRO* ————««
+┆▒⃝꙰💜!velha <l> <c>
+┆▒⃝꙰💜!conecta4 <coluna>
+╞════════𖠁🎮𖠁════════╡

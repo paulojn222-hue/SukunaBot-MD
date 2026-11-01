@@ -1,41 +1,40 @@
-꒰──────୬🪻᥀──────୬
-┃🔮◗ *Bot:* {BOT}
-┃🔮◗ *Usuário:* {USER}
-┃🔮◗ *Prefixo:* {PREFIXO}
-┃🔮◗ *Dono:* {DONO}
-┃🔮◗ *Data:* {DATA}
-┃🔮◗ *Horário:* {HORA}
-┃🔮◗ *Comandos:* {TOTAL}
-꒰──────୬🪻᥀──────୬
+*👋 {SAUDACAO} {user}, seja bem vindo (a) ao meu menu de comandos ✨️*
 
-╭─〔 🔮 *MENUS* 🔮〕
-᥀·࣭࣪̇˖🍹◗{PREFIXO}menuadm
-᥀·࣭࣪̇˖🍹◗{PREFIXO}menubaixar
-᥀·࣭࣪̇˖🍹◗{PREFIXO}menudono
-᥀·࣭࣪̇˖🍹◗{PREFIXO}menufig
-᥀·࣭࣪̇˖🍹◗{PREFIXO}menugame
-᥀·࣭࣪̇˖🍹◗{PREFIXO}menuvip
-╰━━━━━━━━━━━━━╯
+᥀───·ٜ۬･❄️*𝗜𝗡𝗙𝗢𝗥𝗠𝗔𝗖̧𝗢̃𝗘𝗦*❄️·ٜ۬･───୭
+ᯢ🔮 ◗ *𝗕𝗼𝘁* {botName}
+ᯢ🔮 ◗ *𝗨𝘀𝘂𝗮́𝗿𝗶𝗼* {user}
+ᯢ🔮 ◗ *𝗣𝗿𝗲𝗳𝗶𝘅𝗼* {prefix}
+ᯢ🔮 ◗ *𝗗𝗼𝗻𝗼* {ownerName}
+ᯢ🔮 ◗ *𝗗𝗮𝘁𝗮 𝗲 𝗛𝗼𝗿𝗮* {date} {time}
+ᯢ🔮 ◗ *𝗡𝘂́𝗺𝗲𝗿𝗼 𝗱𝗼𝗻𝗼* {ownerNumber}
+ᯢ🔮 ◗ *𝗖𝗼𝗺𝗮𝗻𝗱𝗼𝘀* {quantia_comandos}
 
-╭─〔 🔮*MEMBROS* 〕
-᥀·࣭࣪̇˖💧◗{PREFIXO}chat
-᥀·࣭࣪̇˖💧◗{PREFIXO}adms
-᥀·࣭࣪̇˖💧◗{PREFIXO}middle
-᥀·࣭࣪̇˖💧◗{PREFIXO}alugar
-᥀·࣭࣪̇˖💧◗{PREFIXO}ping
-᥀·࣭࣪̇˖💧◗{PREFIXO}infobot
-᥀·࣭࣪̇˖💧◗{PREFIXO}perfil
-᥀·࣭࣪̇˖💧◗{PREFIXO}dono
-᥀·࣭࣪̇˖💧◗{PREFIXO}criador
-╰━━━━━━━━━━━━━━━╯
+»»————💫 *𝗠𝗘𝗡𝗨𝗦*💫————««
+•.̇𖥨֗❄️⭟!Menuadm
+•.̇𖥨֗❄️⭟!Menudono
+•.̇𖥨֗❄️⭟!Menubaixar
+•.̇𖥨֗❄️⭟!Menufig
+•.̇𖥨֗❄️⭟!Menuvip
+•.̇𖥨֗❄️⭟!Menugame
+•.̇𖥨֗❄️⭟!Menurpg
 
-╭─〔 🔍 *INFO* 〕
-⏤͟͟͞͞🎋{PREFIXO}traduzir
-⏤͟͟͞͞🎋{PREFIXO}cantadas
-⏤͟͟͞͞🎋{PREFIXO}fatos
-⏤͟͟͞͞🎋{PREFIXO}moedas
-⏤͟͟͞͞🎋{PREFIXO}contar_letras
-⏤͟͟͞͞🎋{PREFIXO}calcular
-⏤͟͟͞͞🎋{PREFIXO}versiculo
-⏤͟͟͞͞🎋{PREFIXO}gpt
-╰━━━━━━━━━━╯
+༘🔮⸻»»𝗣𝗥𝗜𝗡𝗖𝗜𝗣𝗔𝗜𝗦««⸻🔮༘
+┆▒⃝꙰💧!alugar
+┆▒⃝꙰💧!ping
+┆▒⃝꙰💧!infobot
+┆▒⃝꙰💧!traduzir
+┆▒⃝꙰💧!clima
+┆▒⃝꙰💧!dono
+┆▒⃝꙰💧!criador
+┆▒⃝꙰💧!versiculo
+┆▒⃝꙰💧!cantadas
+┆▒⃝꙰💧!contar_letras
+┆▒⃝꙰💧!perfil
+┆▒⃝꙰💧!afk
+┆▒⃝꙰💧!fatos
+┆▒⃝꙰💧!adms
+┆▒⃝꙰💧!middle
+┆▒⃝꙰💧!uptime
+┆▒⃝꙰💧!calcular
+┆▒⃝꙰💧!gpt
+»»————✨️{botName}✨️————««

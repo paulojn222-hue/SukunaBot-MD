@@ -160,6 +160,13 @@ function carregarNegra(gid) {
 // ==============================================
 function extrairTexto(msg) {
   const mm = msg.message || {};
+  
+  // 👇 TRATA CLIQUE DE BOTÃO E LISTA
+  if (mm.buttonsResponseMessage) return mm.buttonsResponseMessage.selectedButtonId;
+  if (mm.listResponseMessage) return mm.listResponseMessage.singleSelectReply?.selectedRowId || "";
+  if (mm.templateButtonReplyMessage) return mm.templateButtonReplyMessage.selectedId || "";
+
+  // Textos normais
   if (mm.conversation) return mm.conversation;
   if (mm.extendedTextMessage?.text) return mm.extendedTextMessage.text;
   if (mm.imageMessage?.caption) return mm.imageMessage.caption;
@@ -173,10 +180,9 @@ function extrairTexto(msg) {
   if (mm.ephemeralMessage?.message?.conversation) return mm.ephemeralMessage.message.conversation;
   if (mm.ephemeralMessage?.message?.extendedTextMessage?.text) return mm.ephemeralMessage.message.extendedTextMessage.text;
   if (mm.ephemeralMessage?.message?.imageMessage?.caption) return mm.ephemeralMessage.message.imageMessage.caption;
+  
   return "";
 }
-
-// ==============================================
 // 🛡️ MOTOR DE PROTEÇÃO AUTOMÁTICA
 // ==============================================
 async function aplicarProtecao(sock, msg, idChat, remetente, ehAdm) {
@@ -612,14 +618,20 @@ try {
       return sendOriginal(jid, content, options);
     };
 
-    // BLOQUEIO POR ALUGUEL GLOBAL
-    const alugueis = lerJSON(ARQUIVO_ALUGUEIS, { global: false, lista: {} });
-    if (alugueis.global && ehGrupo) {
-      const reg = alugueis.lista?.[idChat];
-      const valido = reg && reg.expira > Date.now();
-      if (!valido && !ehDonoAqui) return;
-    }
+// BLOQUEIO POR ALUGUEL GLOBAL
+const ARQ_CFG_ALUGUEL = path.join(__dirname, "dados", "config_aluguel.json");
+const ARQ_ALUGADOS = path.join(__dirname, "dados", "alugados.json");
 
+const cfgAluguel = lerJSON(ARQ_CFG_ALUGUEL, { global: false });
+if (cfgAluguel.global && ehGrupo && !ehDonoAqui) {
+  const dadosAlugados = lerJSON(ARQ_ALUGADOS, { lista: [] });
+  const reg = dadosAlugados.lista.find(a => a.gid === idChat);
+  
+  // Se não tiver aluguel ou se já expirou
+  if (!reg || reg.expira <= Date.now()) {
+    return; // Ignora silenciosamente
+  }
+}
     // Verifica se é admin do grupo
     let ehAdm = false;
     if (ehGrupo) {
@@ -733,7 +745,7 @@ try {
     const rpgCfg = lerJSON(ARQ_RPG, { usuarios: {}, grupos: {} });
 
     const comandosRPG = [
-      "menurpg", "saldo", "investir", "roubar", "minerar", "pescar",
+      "menurpg", "saldo", "investir", "roubar", "minerar", "pescar", "crime", // 👈 ADICIONA
       "job", "cassino", "loteria", "raspadinha", "mochila", "loja",
       "comprar", "equipar", "rankrpg", "doar", "pix", "vender",
       "banco", "saldobanco", "sacar",
@@ -826,7 +838,7 @@ if (!executar) {
       "setchannel", "channel",
       "setchat", "addmoedas", "delmoedas",
       "addvip", "rmvip",
-      "figcmd", "delcmdfig", "listacmdfig", "atualizar", "reiniciar", "view", "apikey", "broadcast", "foto_erro", "checkbots", "bot", "uptime", "enquete"
+      "figcmd", "delcmdfig", "listacmdfig", "atualizar", "reiniciar", "view", "apikey", "broadcast", "foto_erro", "checkbots", "bot", "uptime", "botao"
     ];
     if (comandosDono.includes(comando) && !ehDonoAqui) {
       return sock.sendMessage(idChat, {
@@ -836,7 +848,7 @@ if (!executar) {
 
     // VERIFICAÇÃO DE ADMIN DO GRUPO
     const comandosAdm = [
-      "ban", "promover", "rebaixar", "mute", "unmute",
+      "ban", "promover", "rebaixar", "mute", "unmute", "limite_adv", // 👈 ADICIONA
       "adv", "veradv", "rmadv", "zeraradv",
       "abrir", "fechar", "fechargp", "abrirgp",
       "cancelarfechargp", "cancelarabrirgp",
@@ -848,7 +860,7 @@ if (!executar) {
       "add_listanegra", "rm_listanegra", "listanegra",
       "ativar_bemvindo", "desativar_bemvindo", "textobemvindo", "midiabemvindo",
       "textosaiu", "midiasaiu",
-      "modorpg", "x9_adm", "sorteio", "totag", "antiflood", "enquete"
+      "modorpg", "x9_adm", "sorteio", "totag", "antiflood", "enquete", "addstatus", "enquete"
     ];
     if (comandosAdm.includes(comando)) {
       if (!ehDonoAqui && !ehAdm) {
@@ -1053,9 +1065,15 @@ async function iniciarConexao(modo) {
         escutando = true;
       }
 
-      setInterval(() => {
-        processarAgendamentos(sock).catch(e => console.log("Erro agendador:", e.message));
-      }, 30000);
+setInterval(async () => {
+  try {
+    await processarAgendamentos(sock);
+  } catch (e) {
+    // Se for erro de permissão do WhatsApp, ignora silenciosamente
+    if (["locked", "forbidden", "rate-overlimit"].includes(e.message)) return;
+    console.log("Erro agendador:", e.message);
+  }
+}, 30000);
 
       setInterval(async () => {
         try {
@@ -1170,53 +1188,67 @@ async function iniciarConexao(modo) {
         }
       }, 60 * 1000);
 
-      setInterval(async () => {
-        const alugueis = lerJSON(ARQUIVO_ALUGUEIS, { global: false, lista: {} });
-        if (!alugueis.lista) return;
+// ⏰ Verificador de aluguéis expirados
+setInterval(async () => {
+  const ARQ_ALUGADOS = path.join(__dirname, "dados", "alugados.json");
+  if (!fs.existsSync(ARQ_ALUGADOS)) return;
 
-        for (const [gid, reg] of Object.entries(alugueis.lista)) {
-          if (reg.expira > Date.now() || reg.avisado) continue;
+  const dados = JSON.parse(fs.readFileSync(ARQ_ALUGADOS, "utf8"));
+  if (!dados.lista) return;
 
-          try {
-            const meta = await sock.groupMetadata(gid);
-            const adms = meta.participants.filter(p => p.admin).map(p => p.id);
+  const agora = Date.now();
+  let mudou = false;
 
-            const DONO_NOME = config.DONO_PRINCIPAL_NOME || "Dono";
-            const DONO_NUM = config.DONO_PRINCIPAL_NUMERO || "";
-
-            if (adms.length) {
-              await sock.sendMessage(gid, {
-                text:
-                  `⏰ *ALUGUEL EXPIRADO!*\n\n` +
-                  `> O aluguel desse grupo acabou.\n` +
-                  `> 📞 *Contate o dono pra renovar:*\n` +
-                  `> 👤 ${DONO_NOME}\n` +
-                  `> 📱 wa.me/${DONO_NUM}\n\n` +
-                  adms.map(a => `┃ 👑 @${a.split("@")[0].split(":")[0]}`).join("\n"),
-                mentions: adms
-              });
-            }
-
-            await sock.sendMessage(gid, {
-              text:
-                `👋 *ATÉ MAIS!*\n\n` +
-                `> Meu aluguel aqui acabou e vou sair do grupo.\n` +
-                `> 📞 Se quiser renovar, fale com: wa.me/${DONO_NUM}`
-            });
-
-            await new Promise(r => setTimeout(r, 3000));
-            await sock.groupLeave(gid);
-
-            reg.avisado = true;
-            salvarJSON(ARQUIVO_ALUGUEIS, alugueis);
-
-            console.log(`👋 Saí do grupo ${gid} (aluguel expirado)`);
-          } catch (e) {
-            console.log(`Erro ao sair do grupo ${gid}: ${e.message}`);
-          }
-        }
-      }, 60000);
+  for (const reg of dados.lista) {
+    // 1. Faltando 5 minutos (Aviso Prévio)
+    if (reg.expira > agora && (reg.expira - agora) < 300000 && !reg.avisado5min) {
+      reg.avisado5min = true;
+      mudou = true;
+      try {
+        await sock.sendMessage(reg.gid, {
+          text: `⚠️ *ALUGUEL EXPIRANDO!*\n\n> Faltam *5 minutos* para o aluguel acabar.\n> Contate o dono para renovar.`
+        });
+      } catch {}
     }
+
+    // 2. Expirou de vez
+    if (reg.expira <= agora && !reg.avisado) {
+      reg.avisado = true;
+      mudou = true;
+
+      // Avisa o grupo e espera 5 min
+      try {
+        await sock.sendMessage(reg.gid, {
+          text: `⏰ *ALUGUEL EXPIRADO!*\n\n> O aluguel deste grupo acabou.\n> Vou sair em 5 minutos. Contate o dono para renovar.`
+        });
+      } catch {}
+
+      // Avisa o dono
+      try {
+        const DONO = config.DONO_PRINCIPAL_NUMERO || "";
+        if (DONO) {
+          await sock.sendMessage(`${DONO}@s.whatsapp.net`, {
+            text: `🚨 *ALUGUEL EXPIRADO*\n\n> Grupo: *${reg.nome}*\n> ID: ${reg.gid}\n> Cliente: @${reg.cliente}`,
+            mentions: [`${reg.cliente}@s.whatsapp.net`]
+          });
+        }
+      } catch {}
+
+      // Agenda a saída do grupo em 5 minutos (300000 ms)
+      setTimeout(async () => {
+        try {
+          await sock.groupLeave(reg.gid);
+          console.log(`🚪 Saí do grupo ${reg.gid} (aluguel expirado)`);
+        } catch (e) { console.log("Erro ao sair do grupo:", e.message); }
+      }, 300000);
+    }
+  }
+
+  if (mudou) {
+    fs.writeFileSync(ARQ_ALUGADOS, JSON.stringify(dados, null, 2));
+  }
+}, 60000); // Roda a cada 1 minuto
+}
 
     if (connection === "close") {
       const codigo = lastDisconnect?.error?.output?.statusCode;

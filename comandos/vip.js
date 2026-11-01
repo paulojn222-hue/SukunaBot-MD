@@ -429,7 +429,7 @@ if (!eVIP(remetente)) {
           .replace(/{DONO}/g, DONO_PRINCIPAL_NOME || "Dono")
           .replace(/{DATA}/g, data);
 
-        const caminhoMeta = path.join(__dirname, "..", "dados", "menu_midia_menuvip.json");
+        const caminhoMeta = path.join(__dirname, "..", "dados", "menu_midia_menu.json");
         let midia = null;
         try {
           if (fs.existsSync(caminhoMeta)) {

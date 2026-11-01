@@ -53,8 +53,6 @@ function carregarMenuAdm() {
   }
 }
 
-
-
 // ==============================================
 // 🔔 X9_ADM — Avisa quando alguém muda cargo
 // ==============================================
@@ -102,6 +100,312 @@ async function verificarX9(sock, update) {
 module.exports = {
   comandos: [
 
+// ==============================================
+// 👁️ VIEWBV (Prévia do Bem-vindo real)
+// ==============================================
+{
+  nome: "viewbv",
+  descricao: "Mostra a prévia do bem-vindo configurado no grupo",
+  async executar({ sock, idChat, msg }) {
+    if (!idChat.endsWith("@g.us")) return sock.sendMessage(idChat, { text: "❌ Só funciona em grupos." });
+
+    const dados = ler(ARQ_GRUPOS, {});
+    const config = dados[idChat] || {};
+
+    // Pega o texto configurado ou usa um padrão
+    let textoBase = config.textoBemvindo || "Olá {user}, seja bem-vindo(a) ao grupo!";
+    
+    // Pega a mídia configurada
+    const midiaConfig = config.midiaBemvindo;
+    let bufferMidia = null;
+
+    if (midiaConfig && midiaConfig.arquivo) {
+      const caminhoArq = path.join(__dirname, "..", "dados", midiaConfig.arquivo);
+      if (fs.existsSync(caminhoArq)) {
+        bufferMidia = fs.readFileSync(caminhoArq);
+      }
+    }
+
+    const remetente = msg.key.participant || msg.key.remoteJid;
+
+    // Substitui a variável {user} pelo autor do comando para simular
+    const textoPreview = textoBase.replace(/{user}/g, `@${remetente.split("@")[0]}`);
+
+    if (bufferMidia && midiaConfig.tipo === "image") {
+      await sock.sendMessage(idChat, { 
+        image: bufferMidia, 
+        caption: textoPreview, 
+        mentions: [remetente] 
+      });
+    } else if (bufferMidia && midiaConfig.tipo === "video") {
+      await sock.sendMessage(idChat, { 
+        video: bufferMidia, 
+        caption: textoPreview, 
+        mentions: [remetente],
+        gifPlayback: true 
+      });
+    } else {
+      await sock.sendMessage(idChat, { 
+        text: textoPreview, 
+        mentions: [remetente] 
+      });
+    }
+  }
+},
+
+// ==============================================
+// 👁️ VIEWOPEN (Prévia do Abrir Grupo real)
+// ==============================================
+{
+  nome: "viewopen",
+  descricao: "Mostra a prévia da mensagem de abrir grupo",
+  async executar({ sock, idChat }) {
+    if (!idChat.endsWith("@g.us")) return sock.sendMessage(idChat, { text: "❌ Só funciona em grupos." });
+
+    const dados = ler(ARQ_GRUPOS, {});
+    const config = dados[idChat] || {};
+
+    // Pega o texto configurado (se houver) ou usa o padrão do seu bot
+    const textoBase = config.textoAbrir || "🔓 O grupo foi aberto! Todos podem enviar mensagens.";
+    
+    // Pega a mídia configurada (se o seu bot tiver suporte a mídia no abrirgp)
+    const midiaConfig = config.midiaAbrir;
+    let bufferMidia = null;
+
+    if (midiaConfig && midiaConfig.arquivo) {
+      const caminhoArq = path.join(__dirname, "..", "dados", midiaConfig.arquivo);
+      if (fs.existsSync(caminhoArq)) {
+        bufferMidia = fs.readFileSync(caminhoArq);
+      }
+    }
+
+    if (bufferMidia && midiaConfig.tipo === "image") {
+      await sock.sendMessage(idChat, { image: bufferMidia, caption: textoBase });
+    } else if (bufferMidia && midiaConfig.tipo === "video") {
+      await sock.sendMessage(idChat, { video: bufferMidia, caption: textoBase, gifPlayback: true });
+    } else {
+      await sock.sendMessage(idChat, { text: textoBase });
+    }
+  }
+},
+
+// ==============================================
+// 👁️ VIEWCLOSE (Prévia do Fechar Grupo real)
+// ==============================================
+{
+  nome: "viewclose",
+  descricao: "Mostra a prévia da mensagem de fechar grupo",
+  async executar({ sock, idChat }) {
+    if (!idChat.endsWith("@g.us")) return sock.sendMessage(idChat, { text: "❌ Só funciona em grupos." });
+
+    const dados = ler(ARQ_GRUPOS, {});
+    const config = dados[idChat] || {};
+
+    // Pega o texto configurado (se houver) ou usa o padrão
+    const textoBase = config.textoFechar || "🔒 O grupo foi fechado! Apenas administradores podem falar.";
+    
+    const midiaConfig = config.midiaFechar;
+    let bufferMidia = null;
+
+    if (midiaConfig && midiaConfig.arquivo) {
+      const caminhoArq = path.join(__dirname, "..", "dados", midiaConfig.arquivo);
+      if (fs.existsSync(caminhoArq)) {
+        bufferMidia = fs.readFileSync(caminhoArq);
+      }
+    }
+
+    if (bufferMidia && midiaConfig.tipo === "image") {
+      await sock.sendMessage(idChat, { image: bufferMidia, caption: textoBase });
+    } else if (bufferMidia && midiaConfig.tipo === "video") {
+      await sock.sendMessage(idChat, { video: bufferMidia, caption: textoBase, gifPlayback: true });
+    } else {
+      await sock.sendMessage(idChat, { text: textoBase });
+    }
+  }
+},
+
+// ==============================================
+// 📢 TOTAG (Mencionar todos com imagem/legenda limpa)
+// ==============================================
+{
+  nome: "totag",
+  descricao: "Menciona todos silenciosamente (aceita texto ou imagem/vídeo)",
+  async executar({ sock, idChat, msg, resto, downloadMediaMessage }) {
+    if (!idChat.endsWith("@g.us")) {
+      return sock.sendMessage(idChat, { text: "❌ Só funciona em grupos." });
+    }
+
+    // Verifica se é admin
+    const meta = await sock.groupMetadata(idChat);
+    const remetente = msg.key.participant || msg.key.remoteJid;
+    const isAdmin = meta.participants.find(p => p.id === remetente)?.admin;
+    
+    if (!isAdmin) {
+      return sock.sendMessage(idChat, { text: "❌ Apenas administradores podem usar isso." });
+    }
+
+    const membros = meta.participants.map(p => p.id);
+    
+    // Pega o texto digitado após o comando
+    const textoDigitado = (resto || "").trim();
+
+    // Verifica se o admin respondeu a uma imagem ou vídeo
+    const ctx = msg.message?.extendedTextMessage?.contextInfo;
+    const quoted = ctx?.quotedMessage;
+    
+    let temMidia = false;
+    let tipoMidia = null;
+    let bufferMidia = null;
+    let legendaOriginal = "";
+
+    if (quoted?.imageMessage || quoted?.videoMessage) {
+      temMidia = true;
+      tipoMidia = quoted.imageMessage ? "image" : "video";
+      
+      // 👇 AQUI: Pega a legenda original da mensagem que foi respondida
+      legendaOriginal = quoted.imageMessage?.caption || quoted.videoMessage?.caption || "";
+      
+      try {
+        bufferMidia = await downloadMediaMessage(
+          { key: { remoteJid: ctx.remoteJid || idChat, id: ctx.stanzaId, fromMe: false }, message: quoted },
+          "buffer", {},
+          { logger: console, reuploadRequest: sock.updateMediaMessage }
+        );
+      } catch (e) {
+        return sock.sendMessage(idChat, { text: "❌ Erro ao baixar a mídia: " + e.message });
+      }
+    }
+
+    // Define a legenda final: 
+    // 1º tenta o texto que você digitou (!totag Oi)
+    // 2º tenta a legenda original da imagem que você respondeu
+    // 3º se não tiver nada, deixa vazio (se for mídia) ou usa o padrão (se for texto)
+    let textoFinal = textoDigitado || legendaOriginal;
+    if (!textoFinal && !temMidia) {
+      textoFinal = "📢 *Atenção, todos!*";
+    }
+
+    // Se tem mídia, envia com legenda e mentions
+    if (temMidia && bufferMidia) {
+      if (tipoMidia === "image") {
+        await sock.sendMessage(idChat, { 
+          image: bufferMidia, 
+          caption: textoFinal, 
+          mentions: membros // Menciona todos invisivelmente
+        });
+      } else {
+        await sock.sendMessage(idChat, { 
+          video: bufferMidia, 
+          caption: textoFinal, 
+          mentions: membros,
+          gifPlayback: true 
+        });
+      }
+    } 
+    // Se não tem mídia, envia apenas texto com mentions
+    else {
+      await sock.sendMessage(idChat, { 
+        text: textoFinal, 
+        mentions: membros 
+      });
+    }
+  }
+},
+
+// ==============================================
+// 📲 ADDSTATUS (Posta no status do grupo)
+// ==============================================
+{
+  nome: "addstatus",
+  descricao: "Posta uma foto, vídeo ou texto no status",
+  async executar({ sock, idChat, msg, resto, downloadMediaMessage }) {
+    if (!idChat.endsWith("@g.us")) {
+      return sock.sendMessage(idChat, { text: "❌ Esse comando só funciona em grupos." });
+    }
+
+    // Pega o contexto da mensagem (se respondeu algo)
+    const ctx = msg.message?.extendedTextMessage?.contextInfo;
+    const quoted = ctx?.quotedMessage;
+
+    let buffer = null;
+    let tipo = null;
+    let legenda = (resto || "").trim(); // Texto que o adm digitou junto
+
+    // 1. Se respondeu uma mídia (foto ou vídeo)
+    if (quoted) {
+      if (quoted.imageMessage) {
+        tipo = "image";
+        if (!legenda) legenda = quoted.imageMessage.caption || "";
+        try {
+          buffer = await downloadMediaMessage(
+            { key: { remoteJid: ctx.remoteJid || idChat, id: ctx.stanzaId, fromMe: false }, message: quoted },
+            "buffer", {},
+            { logger: console, reuploadRequest: sock.updateMediaMessage }
+          );
+        } catch (e) {
+          return sock.sendMessage(idChat, { text: `❌ Erro ao baixar a foto: ${e.message}` });
+        }
+      } else if (quoted.videoMessage) {
+        tipo = "video";
+        if (!legenda) legenda = quoted.videoMessage.caption || "";
+        try {
+          buffer = await downloadMediaMessage(
+            { key: { remoteJid: ctx.remoteJid || idChat, id: ctx.stanzaId, fromMe: false }, message: quoted },
+            "buffer", {},
+            { logger: console, reuploadRequest: sock.updateMediaMessage }
+          );
+        } catch (e) {
+          return sock.sendMessage(idChat, { text: `❌ Erro ao baixar o vídeo: ${e.message}` });
+        }
+      } else if (quoted.conversation || quoted.extendedTextMessage?.text) {
+        // 2. Se respondeu apenas um texto
+        tipo = "text";
+        if (!legenda) legenda = quoted.conversation || quoted.extendedTextMessage.text;
+      }
+    } 
+    // 3. Se não respondeu nada, mas digitou um texto junto com o comando
+    else if (legenda) {
+      tipo = "text";
+    }
+
+    // Se não achou nem mídia nem texto
+    if (!tipo || (!buffer && !legenda)) {
+      return sock.sendMessage(idChat, {
+        text: "❌ *Uso:*\n> Responda uma *foto* ou *vídeo* com *!addstatus*.\n> Ou digite: *!addstatus Seu texto aqui*."
+      });
+    }
+
+    await sock.sendMessage(idChat, { text: "⏳ *Enviando para o status...*" });
+
+    try {
+      // Envia a mensagem para o JID do grupo como se fosse um status
+      if (tipo === "image") {
+        await sock.sendMessage(idChat, {
+          image: buffer,
+          caption: legenda,
+          statusJidList: [idChat] // 👈 Define que é pro status desse grupo
+        });
+      } else if (tipo === "video") {
+        await sock.sendMessage(idChat, {
+          video: buffer,
+          caption: legenda,
+          statusJidList: [idChat]
+        });
+      } else if (tipo === "text") {
+        await sock.sendMessage(idChat, {
+          text: legenda,
+          backgroundColor: "#000000", // Fundo do texto (opcional)
+          statusJidList: [idChat]
+        });
+      }
+
+      await sock.sendMessage(idChat, { text: "✅ *Status postado com sucesso!*" });
+    } catch (e) {
+      await sock.sendMessage(idChat, { text: `❌ Erro ao postar o status: ${e.message}` });
+    }
+  }
+},
+
 {
   nome: "x9_adm",
   descricao: "Avisa quando alguém é promovido/banido manualmente",
@@ -125,49 +429,107 @@ module.exports = {
   }
 },
 
+
+// ==============================================
+// 🚨 LIMITE_ADV (Define o limite de advertências do grupo)
+// ==============================================
+{
+  nome: "limite_adv",
+  descricao: "Define quantas advertências um membro pode levar antes de ser banido",
+  async executar({ sock, idChat, resto }) {
+    if (!idChat.endsWith("@g.us")) return sock.sendMessage(idChat, { text: "❌ Só funciona em grupos." });
+
+    const limite = parseInt(resto);
+    if (isNaN(limite) || limite < 1 || limite > 10) {
+      return sock.sendMessage(idChat, { text: "❌ Uso: *!limite_adv 3*\n> Escolha um número de 1 a 10." });
+    }
+
+    const ARQ = path.join(__dirname, "..", "dados", "grupos.json");
+    const dados = ler(ARQ, {});
+    if (!dados[idChat]) dados[idChat] = {};
+    dados[idChat].limiteAdv = limite;
+    salvar(ARQ, dados);
+
+    await sock.sendMessage(idChat, {
+      text: `✅ *LIMITE DE ADV DEFENIDO!*\n\n> 🚨 Limite: *${limite}* advertências.\n> ⚠️ Se um membro chegar a esse limite, ele será banido.`
+    });
+  }
+},
+
     // ==============================================
     // 📋 MENU_ADM
     // ==============================================
+
+// ==============================================
+// 📋 MENU_ADM — com suporte a imagem/vídeo
+// ==============================================
 {
   nome: "menuadm",
   descricao: "Mostra o menu de administração",
   async executar({ sock, idChat, msg, PREFIXO, NOME_BOT, DONO_PRINCIPAL_NOME }) {
-    const data = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
-
-    let texto = carregarMenuAdm()
-      .replace(/{PREFIXO}/g, PREFIXO || "!")
-      .replace(/{BOT}/g, NOME_BOT || "Bot")
-      .replace(/{DONO}/g, DONO_PRINCIPAL_NOME || "Dono")
-      .replace(/{DATA}/g, data);
-
-    const caminhoMeta = path.join(__dirname, "..", "dados", "menu_midia_menuadm.json");
-    let midia = null;
     try {
-      if (fs.existsSync(caminhoMeta)) {
-        const meta = JSON.parse(fs.readFileSync(caminhoMeta, "utf8"));
-        if (meta && typeof meta.arquivo === "string") {
-          const caminhoArq = path.join(__dirname, "..", "dados", meta.arquivo);
-          if (fs.existsSync(caminhoArq)) {
-            midia = { meta, buffer: fs.readFileSync(caminhoArq) };
+      const data = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+
+      // 1) Monta o texto do menu
+      let texto;
+      try {
+        texto = carregarMenuAdm()
+          .replace(/{PREFIXO}/g, PREFIXO || "!")
+          .replace(/{BOT}/g, NOME_BOT || "Bot")
+          .replace(/{DONO}/g, DONO_PRINCIPAL_NOME || "Dono")
+          .replace(/{DATA}/g, data);
+      } catch (e) {
+        texto = `📋 *MENU ADMIN*\n\n❌ Erro ao carregar o menu: ${e.message}`;
+      }
+
+      // 2) Busca a mídia configurada (imagem ou vídeo)
+      const caminhoMeta = path.join(__dirname, "..", "dados", "menu_midia_menu.json");
+      let midia = null;
+      try {
+        if (fs.existsSync(caminhoMeta)) {
+          const meta = JSON.parse(fs.readFileSync(caminhoMeta, "utf8"));
+          if (meta && typeof meta.arquivo === "string") {
+            const caminhoArq = path.join(__dirname, "..", "dados", meta.arquivo);
+            if (fs.existsSync(caminhoArq)) {
+              midia = { meta, buffer: fs.readFileSync(caminhoArq) };
+            }
           }
         }
+      } catch { /* se der erro, segue sem mídia */ }
+
+      // 3) Define quem será mencionado (autor da mensagem)
+      const remetente = msg.key.participant || msg.key.remoteJid;
+
+      // 4) Envia com mídia se existir, senão só texto
+      if (midia?.meta?.tipo === "image") {
+        await sock.sendMessage(idChat, {
+          image: midia.buffer,
+          caption: texto,
+          mentions: [remetente]
+        });
+      } else if (midia?.meta?.tipo === "video") {
+        await sock.sendMessage(idChat, {
+          video: midia.buffer,
+          caption: texto,
+          mentions: [remetente],
+          gifPlayback: true
+        });
+      } else {
+        await sock.sendMessage(idChat, {
+          text: texto,
+          mentions: [remetente]
+        });
       }
-    } catch {}
 
-    const remetente = msg.key.participant || msg.key.remoteJid;
-
-    if (midia?.meta?.tipo === "image") {
-      await sock.sendMessage(idChat, { image: midia.buffer, caption: texto, mentions: [remetente] });
-    } else if (midia?.meta?.tipo === "video") {
+    } catch (e) {
       await sock.sendMessage(idChat, {
-        video: midia.buffer, caption: texto, mentions: [remetente],
-        gifPlayback: true
+        text: `❌ Erro no comando menuadm: ${e.message}`
       });
-    } else {
-      await sock.sendMessage(idChat, { text: texto, mentions: [remetente] });
     }
   }
 },
+
+
     // ==============================================
     // 💈 MODERAÇÃO
     // ==============================================
@@ -271,42 +633,50 @@ module.exports = {
       }
     },
 
-    // ==============================================
-    // ⚠️ SISTEMA DE ADV
-    // ==============================================
-    {
-      nome: "adv",
-      descricao: "Dá uma advertência num usuário",
-      async executar({ sock, idChat, msg }) {
-        const alvo = pegarAlvo(msg);
-        if (!alvo) return sock.sendMessage(idChat, { text: "❌ Marque ou responda alguém." });
+// ==============================================
+// 🚨 ADV (Dá uma advertência)
+// ==============================================
+{
+  nome: "adv",
+  descricao: "Dá uma advertência a um membro",
+  async executar({ sock, idChat, msg }) {
+    if (!idChat.endsWith("@g.us")) return;
+    
+    const ctx = msg.message?.extendedTextMessage?.contextInfo;
+    const alvo = ctx?.mentionedJid?.[0] || ctx?.participant;
+    if (!alvo) return sock.sendMessage(idChat, { text: "❌ Marque ou responda alguém." });
 
-        const dados = ler(ARQ_ADVS, {});
-        const chave = `${idChat}|${alvo}`;
-        dados[chave] = (dados[chave] || 0) + 1;
+    const dados = ler(ARQ_ADVS, {});
+    const chave = `${idChat}|${alvo}`;
+    dados[chave] = (dados[chave] || 0) + 1;
+    salvar(ARQ_ADVS, dados);
+
+    // Pega o limite configurado no grupo (padrão 3 se não tiver)
+    const ARQ_GRUPOS = path.join(__dirname, "..", "dados", "grupos.json");
+    const configGrupo = ler(ARQ_GRUPOS, {});
+    const limite = configGrupo[idChat]?.limiteAdv || 3;
+
+    const total = dados[chave];
+
+    await sock.sendMessage(idChat, {
+      text:
+        `⚠️ *ADVERTÊNCIA*\n\n` +
+        `> 👤 @${alvo.split("@")[0]}\n` +
+        `> 📊 Total: *${total}/${limite}*\n` +
+        (total >= limite ? `\n> 🚫 Atingiu o limite de *${limite}* advs! Removendo do grupo...` : ""),
+      mentions: [alvo]
+    });
+
+    // Se atingiu o limite, bane
+    if (total >= limite) {
+      try {
+        await sock.groupParticipantsUpdate(idChat, [alvo], "remove");
+        delete dados[chave];
         salvar(ARQ_ADVS, dados);
-
-        const total = dados[chave];
-
-        await sock.sendMessage(idChat, {
-          text:
-            `⚠️ *ADVERTÊNCIA*\n\n` +
-            `> 👤 @${normalizar(alvo)}\n` +
-            `> 📊 Total: *${total}/3*\n` +
-            (total >= 3 ? `\n> 🚫 Atingiu 3 advs! Removendo do grupo...` : ""),
-          mentions: [alvo]
-        });
-
-        if (total >= 3 && idChat.endsWith("@g.us")) {
-          try {
-            await sock.groupParticipantsUpdate(idChat, [alvo], "remove");
-            delete dados[chave];
-            salvar(ARQ_ADVS, dados);
-          } catch {}
-        }
-      }
-    },
-
+      } catch {}
+    }
+  }
+},
     {
       nome: "veradv",
       descricao: "Mostra as advs de um usuário",
@@ -500,7 +870,7 @@ module.exports = {
 },
 
 {
-  nome: "legendafechar",
+  nome: "texto_fechar",
   descricao: "Define legenda ao fechar o grupo",
   async executar({ sock, idChat, msg, resto }) {
     if (!idChat.endsWith("@g.us")) {
@@ -536,7 +906,7 @@ module.exports = {
 },
 
 {
-  nome: "legendaabrir",
+  nome: "texto_abrir",
   descricao: "Define legenda ao abrir o grupo",
   async executar({ sock, idChat, msg, resto }) {
     if (!idChat.endsWith("@g.us")) {
@@ -789,41 +1159,6 @@ module.exports = {
   }
 },
 
-// ==============================================
-// 📢 TOTAG (Melhorado: sem precisar marcar ninguém)
-// ==============================================
-{
-  nome: "totag",
-  descricao: "Marca todos os membros do grupo",
-  async executar({ sock, idChat, msg, resto }) {
-    if (!idChat.endsWith("@g.us")) {
-      return sock.sendMessage(idChat, { text: "❌ Só funciona em grupos." });
-    }
-
-    try {
-      const meta = await sock.groupMetadata(idChat);
-      const todos = meta.participants.map(p => p.id);
-      
-      // Pega o texto da mensagem que o adm respondeu ou o texto digitado
-      const ctx = msg.message?.extendedTextMessage?.contextInfo;
-      const quoted = ctx?.quotedMessage;
-      
-      let textoOriginal = (resto || "").trim();
-      if (!textoOriginal && quoted?.conversation) textoOriginal = quoted.conversation;
-      if (!textoOriginal && quoted?.extendedTextMessage?.text) textoOriginal = quoted.extendedTextMessage.text;
-
-      const mensagemFinal = textoOriginal || "📢 *Atenção, pessoal!*";
-
-      await sock.sendMessage(idChat, {
-        text: `${mensagemFinal}\n\n${todos.map(t => `@${t.split("@")[0]}`).join(" ")}`,
-        mentions: todos
-      });
-    } catch (e) {
-      await sock.sendMessage(idChat, { text: `❌ Erro: ${e.message}` });
-    }
-  }
-},
-
     {
       nome: "r",
       descricao: "Apaga a mensagem respondida",
@@ -1048,7 +1383,7 @@ module.exports = {
   }
 },
     {
-      nome: "delparceria",
+      nome: "rmparceria",
       descricao: "Remove uma parceria",
       async executar({ sock, idChat, msg }) {
         const alvo = pegarAlvo(msg);
@@ -1067,7 +1402,7 @@ module.exports = {
     },
 
     {
-      nome: "lista_parceria",
+      nome: "parcerias",
       descricao: "Lista as parcerias do grupo",
       async executar({ sock, idChat }) {
         const dados = ler(ARQ_PARCERIAS, {});
@@ -1195,7 +1530,7 @@ module.exports = {
     // 🔰 BEM-VINDO / SAÍDA
     // ==============================================
     {
-      nome: "ativar_bemvindo",
+      nome: "ativar_bv",
       descricao: "Ativa boas-vindas",
       async executar({ sock, idChat }) {
         const dados = ler(ARQ_GRUPOS, {});
@@ -1207,7 +1542,7 @@ module.exports = {
     },
 
     {
-      nome: "desativar_bemvindo",
+      nome: "desativar_bv",
       descricao: "Desativa boas-vindas",
       async executar({ sock, idChat }) {
         const dados = ler(ARQ_GRUPOS, {});
@@ -1219,7 +1554,7 @@ module.exports = {
     },
 
     {
-      nome: "textobemvindo",
+      nome: "textobv",
       descricao: "Define o texto de boas-vindas",
       async executar({ sock, idChat, resto }) {
         if (!resto) return sock.sendMessage(idChat, { text: "❌ Uso: *!textobemvindo <texto>*\n\nUse {user} pra marcar a pessoa." });
@@ -1232,7 +1567,7 @@ module.exports = {
     },
 
     {
-      nome: "midiabemvindo",
+      nome: "midia_bv",
       descricao: "Define mídia de boas-vindas",
       async executar({ sock, idChat, msg, downloadMediaMessage }) {
         const ctx = msg.message?.extendedTextMessage?.contextInfo;
@@ -1267,7 +1602,7 @@ module.exports = {
     },
 
     {
-      nome: "textosaiu",
+      nome: "texto_saiu",
       descricao: "Define o texto de saída",
       async executar({ sock, idChat, resto }) {
         if (!resto) return sock.sendMessage(idChat, { text: "❌ Uso: *!textosaiu <texto>*\n\nUse {user} pra marcar." });
@@ -1280,7 +1615,7 @@ module.exports = {
     },
 
     {
-      nome: "midiasaiu",
+      nome: "midia_saiu",
       descricao: "Define mídia de saída",
       async executar({ sock, idChat, msg, downloadMediaMessage }) {
         const ctx = msg.message?.extendedTextMessage?.contextInfo;

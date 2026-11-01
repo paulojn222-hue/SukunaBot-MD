@@ -1,35 +1,25 @@
-╭─〔 💎 SISTEMA VIP 〕
-┃
-┃ 🔮◗ {PREFIXO}listavip
-┃ 🔮◗ {PREFIXO}vip
-╰━━━━━━━━━━━━━━╯
+»»———— 💎 *SISTEMA VIP* ————««
+┆▒⃝꙰💎!listavip
+┆▒⃝꙰💎!vip
 
-╭─〔 🤖 IA E CONSULTAS 〕
-┃🪻 {PREFIXO}axis <pergunta>
-┃🪻 {PREFIXO}cep 01310930
-┃🪻 {PREFIXO}sora <descrição>
-┃🪻 {PREFIXO}g1
-╰━━━━━━━━━━━━━━╯
+»»———— 🤖 *IA E CONSULTAS* ————««
+┆▒⃝꙰🪻!axis <pergunta>
+┆▒⃝꙰🪻!cep 01310930
+┆▒⃝꙰🪻!sora <descrição>
+┆▒⃝꙰🪻!g1
 
-╭─〔 🌎 CONSULTAS 〕
-┃
-┃ 🪻◗ {PREFIXO}info_ddd
-┃ 🪻◗ {PREFIXO}info_ddi
-╰━━━━━━━━━━━━━━╯
+»»———— 🌎 *CONSULTAS* ————««
+┆▒⃝꙰🌎!info_ddd
+┆▒⃝꙰🌎!info_ddi
 
-╭─〔 📝 ANOTAÇÕES 〕
-┃
-┃ 💧◗ {PREFIXO}anotar
-┃ 💧◗ {PREFIXO}anotações
-┃ 💧◗ {PREFIXO}rm_anotação <id>
-╰━━━━━━━━━━━━━━╯
+»»———— 📝 *ANOTAÇÕES* ————««
+┆▒⃝꙰💧!anotar
+┆▒⃝꙰💧!anotações
+┆▒⃝꙰💧!rm_anotação <id>
 
-╭─〔 🌀 SISTEMA DE AURA 〕
-┃
-┃ 🔮◗ {PREFIXO}aura
-╰━━━━━━━━━━━━━━╯
+»»———— 🌀 *SISTEMA DE AURA* ————««
+┆▒⃝꙰🔮!aura
 
-╭─〔 🎂 IDADE 〕
-┃
-┃ 🪻◗ {PREFIXO}idade <dia/mês/ano>
-╰━━━━━━━━━━━━━━╯
+»»———— 🎂 *IDADE* ————««
+┆▒⃝꙰🎂!idade <dia/mês/ano>
+╞════════𖠁🪄𖠁════════╡

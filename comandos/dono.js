@@ -18,6 +18,25 @@ function salvarPrefixo(novo) {
 module.exports = {
   comandos: [
 
+{
+  nome: "ativar_botao",
+  descricao: "Ativa o modo de botões no menu",
+  async executar({ sock, idChat }) {
+    const ARQ = path.join(__dirname, "..", "dados", "config_menu.json");
+    fs.writeFileSync(ARQ, JSON.stringify({ botoes: true }, null, 2));
+    await sock.sendMessage(idChat, { text: "✅ *Modo Botões ATIVADO no menu!*" });
+  }
+},
+{
+  nome: "desativar_botao",
+  descricao: "Desativa o modo de botões no menu",
+  async executar({ sock, idChat }) {
+    const ARQ = path.join(__dirname, "..", "dados", "config_menu.json");
+    fs.writeFileSync(ARQ, JSON.stringify({ botoes: false }, null, 2));
+    await sock.sendMessage(idChat, { text: "✅ *Modo Texto ATIVADO no menu!*" });
+  }
+},
+
 // ==============================================
 // ⏱️ UPTIME (Informações do Sistema)
 // ==============================================
@@ -595,8 +614,11 @@ module.exports = {
     // ==============================================
     // 💭 SUBDONOS
     // ==============================================
+// ==============================================
+// 💭 SUBDONO (Adicionar)
+// ==============================================
 {
-  nome: "addsubdono",
+  nome: "subdono",
   descricao: "Adiciona um subdono",
   async executar({ sock, idChat, msg, lerJSON, salvarJSON, ARQUIVO_SUBDONOS, normalizarNumero }) {
     const alvo = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0]
@@ -604,7 +626,7 @@ module.exports = {
 
     if (!alvo) {
       return sock.sendMessage(idChat, {
-        text: "❌ Uso: *!addsubdono @usuario* (ou responda uma mensagem dele)"
+        text: "❌ Uso: *!subdono @usuario* (ou responda uma mensagem dele)"
       });
     }
 
@@ -612,12 +634,12 @@ module.exports = {
     if (!dados.lista) dados.lista = [];
 
     const lid = normalizarNumero(alvo);
+    
     // Se já existir, não adiciona
     if (dados.lista.some(s => (typeof s === "string" ? s : s.lid) === lid)) {
       return sock.sendMessage(idChat, { text: `⚠️ @${lid} já é subdono.`, mentions: [alvo] });
     }
 
-    // Salva o JID completo + LID
     dados.lista.push({ lid, jid: alvo });
     salvarJSON(ARQUIVO_SUBDONOS, dados);
 
@@ -628,44 +650,77 @@ module.exports = {
   }
 },
 
+// ==============================================
+// 🗑️ RMSUB (Remover por ID ou Menção)
+// ==============================================
 {
-  nome: "rmsubdono",
-  descricao: "Remove um subdono",
-  async executar({ sock, idChat, msg, lerJSON, salvarJSON, ARQUIVO_SUBDONOS, normalizarNumero }) {
-    const alvo = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0]
-      || msg.message?.extendedTextMessage?.contextInfo?.participant;
+  nome: "rmsub",
+  descricao: "Remove um subdono por número (ID) ou menção",
+  async executar({ sock, idChat, msg, resto, lerJSON, salvarJSON, ARQUIVO_SUBDONOS, normalizarNumero }) {
+    const dados = lerJSON(ARQUIVO_SUBDONOS, { lista: [] });
+    const lista = dados.lista || [];
 
-    if (!alvo) {
-      return sock.sendMessage(idChat, { text: "❌ Uso: *!rmsubdono @usuario*" });
+    if (!lista.length) {
+      return sock.sendMessage(idChat, { text: "📭 Não há subdonos para remover." });
     }
 
-    const dados = lerJSON(ARQUIVO_SUBDONOS, { lista: [] });
-    const lid = normalizarNumero(alvo);
-    const antes = dados.lista.length;
+    const alvoMencao = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0]
+      || msg.message?.extendedTextMessage?.contextInfo?.participant;
+    
+    let removido = null;
 
-    dados.lista = dados.lista.filter(s => {
-      const sLid = typeof s === "string" ? s : s.lid;
-      return sLid !== lid;
-    });
+    // 1) Tentar remover por ID numérico
+    const idDigitado = (resto || "").trim();
+    if (/^\d+$/.test(idDigitado)) {
+      const index = parseInt(idDigitado) - 1;
+      if (index >= 0 && index < lista.length) {
+        removido = lista[index];
+        lista.splice(index, 1); // Remove do array
+      } else {
+        return sock.sendMessage(idChat, { text: `❌ ID *${idDigitado}* inválido. A lista tem apenas ${lista.length} subdonos.` });
+      }
+    } 
+    // 2) Se não digitou ID, tenta remover por menção (modo antigo)
+    else if (alvoMencao) {
+      const lid = normalizarNumero(alvoMencao);
+      const index = lista.findIndex(s => {
+        const sLid = typeof s === "string" ? s : s.lid;
+        return sLid === lid;
+      });
 
-    if (dados.lista.length === antes) {
-      return sock.sendMessage(idChat, {
-        text: `⚠️ @${lid} não era subdono.`,
-        mentions: [alvo]
+      if (index !== -1) {
+        removido = lista[index];
+        lista.splice(index, 1);
+      } else {
+        return sock.sendMessage(idChat, { text: `⚠️ @${lid} não é subdono.`, mentions: [alvoMencao] });
+      }
+    } 
+    // 3) Se não fez nada
+    else {
+      return sock.sendMessage(idChat, { 
+        text: "❌ Uso: *!rmsub <ID>* (veja o ID na lista de subdonos)\nOu marque a pessoa: *!rmsub @usuario*" 
       });
     }
 
+    dados.lista = lista;
     salvarJSON(ARQUIVO_SUBDONOS, dados);
+
+    const lidRemovido = typeof removido === "string" ? removido : removido.lid;
+    const jidRemovido = typeof removido === "string" ? null : removido.jid;
+    
     await sock.sendMessage(idChat, {
-      text: `🗑️ *Subdono removido!*\n\n> 👤 @${lid} perdeu as permissões.`,
-      mentions: [alvo]
+      text: `🗑️ *Subdono removido!*\n\n> 👤 @${lidRemovido} perdeu as permissões.`,
+      mentions: jidRemovido ? [jidRemovido] : []
     });
   }
 },
 
+// ==============================================
+// 📋 SUBDONOS (Lista formatada)
+// ==============================================
 {
-  nome: "lista_subdonos",
-  descricao: "Lista os subdonos",
+  nome: "subdonos",
+  descricao: "Lista os subdonos com visual bonito",
   async executar({ sock, idChat, lerJSON, ARQUIVO_SUBDONOS }) {
     const dados = lerJSON(ARQUIVO_SUBDONOS, { lista: [] });
     const lista = dados.lista || [];
@@ -680,28 +735,35 @@ module.exports = {
       return { lid: s.lid || s, jid: s.jid || null };
     });
 
-    // Separa quem tem JID (pode marcar) e quem só tem LID
     const comJid = subs.filter(s => s.jid);
     const soLid = subs.filter(s => !s.jid);
 
+    // Monta a lista formatada
     const linhas = subs.map((s, i) => {
-      const num = String(i + 1).padStart(2, " ");
-      if (s.jid) return `┃ ${num}. @${s.lid}`;
-      return `┃ ${num}. \`${s.lid}\` _(sem JID)_`;
+      const id = String(i + 1).padStart(2, "0");
+      if (s.jid) return `┃ 👑 *[${id}]* @${s.lid}`;
+      return `┃ 👤 *[${id}]* \`${s.lid}\` _(sem JID)_`;
     }).join("\n");
 
     const mentions = comJid.map(s => s.jid);
 
     const texto =
-      `💭 *SUBDONOS DO BOT*\n\n` +
-      `> Total: *${subs.length}*\n` +
-      (soLid.length ? `> ⚠️ Sem JID: *${soLid.length}* (não marca)\n` : "") +
-      `\n` + linhas + `\n\n` +
-      `> 💡 Sem JID = adicionado antes da atualização.`;
+      `╭━━━〔 💭 *SUBDONOS* 〕━━━╮\n` +
+      `┃\n` +
+      `┃ 📊 *Total:* ${subs.length}\n` +
+      (soLid.length ? `┃ ⚠️ *Sem JID:* ${soLid.length}\n` : "") +
+      `┃\n` +
+      `┣━━━〔 📋 *LISTA* 〕━━━\n` +
+      `┃\n` +
+      `${linhas}\n` +
+      `┃\n` +
+      `╰━━━━━━━━━━━━━━━━━━━━━━━╯\n\n` +
+      `> 💡 Para remover, use: *!rmsub <ID>*`;
 
     await sock.sendMessage(idChat, { text: texto, mentions });
   }
 },
+
     // ==============================================
     // 💌 CONFIGURAÇÕES
     // ==============================================
@@ -924,56 +986,43 @@ module.exports = {
   descricao: "Define foto/vídeo de um menu",
   async executar({ sock, idChat, msg, resto, downloadMediaMessage }) {
     const alvoMenu = (resto || "menu").trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
-    if (!alvoMenu) {
-      return sock.sendMessage(idChat, {
-        text: "❌ Uso: responda foto/vídeo com *!setmenu <menu>*\nEx: `!setmenu menudono`"
-      });
-    }
-
     const ctx = msg.message?.extendedTextMessage?.contextInfo;
     const quoted = ctx?.quotedMessage;
 
     if (!quoted || !ctx) {
-      return sock.sendMessage(idChat, {
-        text: "❌ Responda a uma *foto* ou *vídeo* com *!setmenu <menu>*"
-      });
+      return sock.sendMessage(idChat, { text: "❌ Responda a uma *foto* ou *vídeo* com *!setmenu <menu>*" });
     }
 
-    const tipo = quoted.imageMessage ? "image"
-               : quoted.videoMessage ? "video"
-               : null;
-
-    if (!tipo) {
-      return sock.sendMessage(idChat, { text: "❌ Só aceito foto ou vídeo." });
-    }
+    const tipo = quoted.imageMessage ? "image" : quoted.videoMessage ? "video" : null;
+    if (!tipo) return sock.sendMessage(idChat, { text: "❌ Só aceito foto ou vídeo." });
 
     try {
       const buffer = await downloadMediaMessage(
-        {
-          key: { remoteJid: ctx.remoteJid || idChat, id: ctx.stanzaId, fromMe: false },
-          message: quoted
-        },
-        "buffer",
-        {},
+        { key: { remoteJid: ctx.remoteJid || idChat, id: ctx.stanzaId, fromMe: false }, message: quoted },
+        "buffer", {},
         { logger: console, reuploadRequest: sock.updateMediaMessage }
       );
+
+      if (!buffer || buffer.length === 0) throw new Error("Buffer vazio");
 
       const pastaDados = path.join(__dirname, "..", "dados");
       fs.mkdirSync(pastaDados, { recursive: true });
 
       const ext = tipo === "image" ? "jpg" : "mp4";
       const nomeArq = `menu_midia_${alvoMenu}.${ext}`;
-      fs.writeFileSync(path.join(pastaDados, nomeArq), buffer);
+      const caminho = path.join(pastaDados, nomeArq);
+      
+      // 1. Salva o arquivo de mídia
+      fs.writeFileSync(caminho, buffer);
 
+      // 2. Salva o JSON de controle
       const meta = { tipo, arquivo: nomeArq, menu: alvoMenu, salvo: Date.now() };
       fs.writeFileSync(
         path.join(pastaDados, `menu_midia_${alvoMenu}.json`),
         JSON.stringify(meta, null, 2)
       );
 
-      await sock.sendMessage(idChat, {
-        text: `✅ *Mídia do menu "${alvoMenu}" salva!* (${tipo})`
-      });
+      await sock.sendMessage(idChat, { text: `✅ *Mídia do menu "${alvoMenu}" salva!* (${tipo})` });
     } catch (e) {
       await sock.sendMessage(idChat, { text: `❌ Erro baixando mídia: ${e.message}` });
     }
@@ -1094,7 +1143,7 @@ module.exports = {
     }
 
     // 📎 Mídia do menudono
-    const caminhoMeta = path.join(__dirname, "..", "dados", "menu_midia_menudono.json");
+    const caminhoMeta = path.join(__dirname, "..", "dados", "menu_midia_menu.json");
     let midia = null;
     try {
       if (fs.existsSync(caminhoMeta)) {

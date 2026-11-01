@@ -57,6 +57,7 @@ async function criarFiguraImagem(buffer, formato = "quadrado") {
 
   return new Promise((resolve, reject) => {
     ffmpeg(tmpIn)
+      .inputOptions(["-y"]) // Força sobrescrever se existir
       .outputOptions([
         "-vcodec libwebp",
         "-vf", filtro,
@@ -64,7 +65,7 @@ async function criarFiguraImagem(buffer, formato = "quadrado") {
         "-compression_level 6",
         "-q:v 80",
         "-an",
-        "-vsync 0"
+        "-fps_mode passthrough" // CORREÇÃO: Substitui o antigo -vsync 0
       ])
       .toFormat("webp")
       .save(tmpOut)
@@ -98,16 +99,16 @@ async function criarFiguraVideo(buffer, formato = "quadrado") {
 
   return new Promise((resolve, reject) => {
     ffmpeg(tmpIn)
-      .inputOptions(["-t 6"])
+      .inputOptions(["-y", "-t 6"])
       .outputOptions([
-        "-vcodec libwebp",
-        "-vf", `fps=15,${filtro}`,
-        "-lossless 0",
-        "-compression_level 6",
-        "-q:v 50",
-        "-loop 0",
+        "-vcodec", "libwebp",
+        "-vf", `${filtro},fps=15`, 
+        "-lossless", "0",
+        "-compression_level", "6",
+        "-q:v", "50",
+        "-loop", "0",
         "-an",
-        "-vsync 0"
+        "-fps_mode", "passthrough"
       ])
       .toFormat("webp")
       .save(tmpOut)
@@ -149,15 +150,16 @@ module.exports = {
       descricao: "Mostra o menu de figurinhas",
       async executar({ sock, idChat, msg, PREFIXO, NOME_BOT, DONO_PRINCIPAL_NOME }) {
         const data = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
-
+        
         let texto = carregarMenuFig()
           .replace(/{PREFIXO}/g, PREFIXO || "!")
           .replace(/{BOT}/g, NOME_BOT || "Bot")
           .replace(/{DONO}/g, DONO_PRINCIPAL_NOME || "Dono")
           .replace(/{DATA}/g, data);
 
-        const caminhoMeta = path.join(__dirname, "..", "dados", "menu_midia_menufig.json");
+        const caminhoMeta = path.join(__dirname, "..", "dados", "menu_midia_menu.json");
         let midia = null;
+        
         try {
           if (fs.existsSync(caminhoMeta)) {
             const meta = JSON.parse(fs.readFileSync(caminhoMeta, "utf8"));
@@ -300,76 +302,75 @@ module.exports = {
     // ==============================================
     // 🪄 !rename
     // ==============================================
-{
-  nome: "rename",
-  descricao: "Renomeia o pack da figurinha",
-  async executar({ sock, idChat, msg, resto, downloadMediaMessage }) {
-    const t = (resto || "").trim();
-    if (!t) {
-      return sock.sendMessage(idChat, { text: "🎨 Uso: *!rename <texto>* (responda uma figurinha)" });
-    }
+    {
+      nome: "rename",
+      descricao: "Renomeia o pack da figurinha",
+      async executar({ sock, idChat, msg, resto, downloadMediaMessage }) {
+        const t = (resto || "").trim();
+        if (!t) {
+          return sock.sendMessage(idChat, { text: "🎨 Uso: *!rename <texto>* (responda uma figurinha)" });
+        }
 
-    const ctx = msg.message?.extendedTextMessage?.contextInfo || {};
-    const q = ctx.quotedMessage;
+        const ctx = msg.message?.extendedTextMessage?.contextInfo || {};
+        const q = ctx.quotedMessage;
 
-    if (!q || !q.stickerMessage) {
-      return sock.sendMessage(idChat, { text: "🎨 Responda uma *figurinha* com *!rename texto*" });
-    }
+        if (!q || !q.stickerMessage) {
+          return sock.sendMessage(idChat, { text: "🎨 Responda uma *figurinha* com *!rename texto*" });
+        }
 
-    try {
-      // 👇 Usa downloadMediaMessage do Baileys (passado pelo index)
-      const alvo = {
-        key: { remoteJid: ctx.remoteJid || idChat, id: ctx.stanzaId, fromMe: false },
-        message: { stickerMessage: q.stickerMessage }
-      };
+        try {
+          const alvo = {
+            key: { remoteJid: ctx.remoteJid || idChat, id: ctx.stanzaId, fromMe: false },
+            message: { stickerMessage: q.stickerMessage }
+          };
 
-      const buf = await downloadMediaMessage(
-        alvo,
-        "buffer",
-        {},
-        { logger: console, reuploadRequest: sock.updateMediaMessage }
-      );
+          const buf = await downloadMediaMessage(
+            alvo,
+            "buffer",
+            {},
+            { logger: console, reuploadRequest: sock.updateMediaMessage }
+          );
 
-      let outBuf = buf;
+          let outBuf = buf;
 
-      try {
-        const { Image } = require("node-webpmux");
-        const img = new Image();
-        await img.load(buf);
+          try {
+            const { Image } = require("node-webpmux");
+            const img = new Image();
+            await img.load(buf);
 
-        const json = {
-          "sticker-pack-id": "com.hoshino." + Date.now(),
-          "sticker-pack-name": t,
-          "sticker-pack-publisher": t,
-          "emojis": ["✨"]
-        };
+            const json = {
+              "sticker-pack-id": "com.hoshino." + Date.now(),
+              "sticker-pack-name": t,
+              "sticker-pack-publisher": t,
+              "emojis": ["✨"]
+            };
 
-        const exifAttr = Buffer.from([
-          0x49,0x49,0x2A,0x00,0x08,0x00,0x00,0x00,0x01,0x00,
-          0x41,0x57,0x07,0x00,0x00,0x00,0x00,0x00,0x16,0x00,
-          0x00,0x00
-        ]);
-        const jsonBuf = Buffer.from(JSON.stringify(json), "utf8");
-        const exif = Buffer.concat([exifAttr, jsonBuf]);
-        exif.writeUIntLE(jsonBuf.length, 14, 4);
+            const exifAttr = Buffer.from([
+              0x49,0x49,0x2A,0x00,0x08,0x00,0x00,0x00,0x01,0x00,
+              0x41,0x57,0x07,0x00,0x00,0x00,0x00,0x00,0x16,0x00,
+              0x00,0x00
+            ]);
+            const jsonBuf = Buffer.from(JSON.stringify(json), "utf8");
+            const exif = Buffer.concat([exifAttr, jsonBuf]);
+            exif.writeUIntLE(jsonBuf.length, 14, 4);
 
-        img.exif = exif;
-        outBuf = await img.save(null);
-      } catch (e) {
-        console.log("Aviso exif:", e.message);
+            img.exif = exif;
+            outBuf = await img.save(null);
+          } catch (e) {
+            console.log("Aviso exif:", e.message);
+          }
+
+          await sock.sendMessage(idChat, {
+            sticker: outBuf,
+            packname: t,
+            author: t
+          });
+        } catch (e) {
+          console.log("Erro rename:", e.message);
+          await sock.sendMessage(idChat, { text: "🌙💢 " + e.message });
+        }
       }
-
-      await sock.sendMessage(idChat, {
-        sticker: outBuf,
-        packname: t,
-        author: t
-      });
-    } catch (e) {
-      console.log("Erro rename:", e.message);
-      await sock.sendMessage(idChat, { text: "🌙💢 " + e.message });
-    }
-  }
-},
+    },
 
     // ==============================================
     // 🪄 !attp

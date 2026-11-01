@@ -6,6 +6,62 @@ const ARQ_RPG = path.join(__dirname, "..", "dados", "rpg.json");
 const ARQ_MENU_GAME = path.join(__dirname, "..", "personalize_aqui", "menu_game.txt");
 
 // ==============================================
+// 🎲 FUNÇÕES AUXILIARES DOS RANKS
+// ==============================================
+
+// Gera uma nota de 1 a 100 sempre igual para o mesmo usuário
+function gerarNota(jid, tipo) {
+  let hash = 0;
+  const str = jid + tipo;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash % 100) + 1;
+}
+
+// Pega o Top 5 e formata a frase
+function gerarRanking(membros, tipo) {
+  const rankeados = membros.map(m => ({
+    jid: m.id,
+    nota: gerarNota(m.id, tipo)
+  }));
+
+  rankeados.sort((a, b) => b.nota - a.nota);
+  const top5 = rankeados.slice(0, 5);
+  return top5;
+}
+
+function gerarLegenda(tipo, top5) {
+  const emojis = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
+  let texto = `🏆 *TOP 5 ${tipo.toUpperCase()} DO GRUPO*\n\n`;
+
+  top5.forEach((user, index) => {
+    const num = user.jid.split("@")[0];
+    texto += `${emojis[index]} @${num} — *${user.nota}/100*\n`;
+  });
+
+  const frases = {
+    gado: ["O gado mais manso do grupo! 🐄", "Muge alto, mas obedece baixo! 🐮"],
+    fiel: ["A fidelidade em pessoa! 🛡️", "Nunca traiu nem no free fire! 💍"],
+    lindo: ["A beleza do grupo! 😍", "Deus caprichou nesse rosto! ✨"],
+    linda: ["A deusa do grupo! 👸", "Perfeita demais! 💖"],
+    corno: ["O rei do chifre! 🦌", "A galhada é grande! 💀"],
+    rico: ["Bilionário do fake! 💰", "O dono do role! 🤑"],
+    pobre: ["Tá liso, mas é gente boa! 💸", "Conta bancária no vermelho! 📉"],
+    alto: ["A torre do grupo! 🏢", "Bate a cabeça na porta! 🚪"],
+    baixo: ["O chão é seu limite! 🐜", "Tem que subir no banco pra falar! 🪑"],
+    limpo: ["Cheiroso demais! 🧼", "Tomou banho hoje! 🚿"],
+    sujo: ["Precisa de um banho urgente! 🐷", "O suor tá forte! 🦨"]
+  };
+
+  const fraseFinal = frases[tipo] || ["O grupo é isso aí!"];
+  texto += `\n> ${fraseFinal[Math.floor(Math.random() * fraseFinal.length)]}`;
+
+  return texto;
+}
+
+// ==============================================
 // 💾 PERSISTÊNCIA
 // ==============================================
 function lerGames() {
@@ -44,18 +100,14 @@ function darMoedas(num, quantia) {
   salvarRPG(rpg);
 }
 
-// 👇 Normaliza número — remove tudo que não for dígito
 function normalizar(jid) {
   if (!jid) return "";
   return String(jid).split("@")[0].split(":")[0].replace(/\D/g, "");
 }
 
-// 👇 Retorna o JID completo pra mencionar (usa @lid se for LID)
 function jidMencao(remetente) {
   if (!remetente) return "";
-  // Se já é um JID completo (@lid ou @s.whatsapp.net), usa como tá
   if (remetente.includes("@")) return remetente;
-  // Senão, monta com @s.whatsapp.net
   return `${remetente}@s.whatsapp.net`;
 }
 
@@ -287,6 +339,47 @@ function verificarConecta4(tab) {
 
 module.exports = {
   comandos: [
+    
+// ==============================================
+// 🪄 COMANDOS DINÂMICOS (RANKS SEM IMAGEM)
+// ==============================================
+...[
+  "gado", "fiel", "lindo", "linda", "corno", "rico",
+  "pobre", "alto", "baixo", "limpo", "sujo"
+].map(tipo => ({
+  nome: `rank${tipo}`,
+  descricao: `Mostra o Top 5 ${tipo} do grupo`,
+  async executar({ sock, idChat, msg }) {
+    if (!idChat.endsWith("@g.us")) {
+      return sock.sendMessage(idChat, { text: "❌ Só funciona em grupos." });
+    }
+
+    try {
+      // Pega os membros do grupo
+      const meta = await sock.groupMetadata(idChat);
+      const membros = meta.participants;
+
+      if (membros.length < 5) {
+        return sock.sendMessage(idChat, { text: "❌ O grupo precisa ter pelo menos 5 membros." });
+      }
+
+      // Gera o Top 5 e a legenda
+      const top5 = gerarRanking(membros, tipo);
+      const legenda = gerarLegenda(tipo, top5);
+
+      // Envia APENAS o texto com as menções
+      await sock.sendMessage(idChat, {
+        text: legenda,
+        mentions: top5.map(u => u.jid)
+      });
+
+    } catch (e) {
+      console.log(`Erro no rank${tipo}:`, e);
+      await sock.sendMessage(idChat, { text: "❌ Erro ao gerar o ranking." });
+    }
+  }
+})),
+
     // ==============================================
     // 📋 MENU GAME
     // ==============================================
@@ -302,7 +395,7 @@ module.exports = {
           .replace(/{DONO}/g, DONO_PRINCIPAL_NOME || "Dono")
           .replace(/{DATA}/g, data);
 
-        const caminhoMeta = path.join(__dirname, "..", "dados", "menu_midia_menugame.json");
+        const caminhoMeta = path.join(__dirname, "..", "dados", "menu_midia_menu.json");
         let midia = null;
         try {
           if (fs.existsSync(caminhoMeta)) {
@@ -558,64 +651,63 @@ module.exports = {
       }
     },
 
-    // ==============================================
-    // 🔠 ADEDONHA (inicia jogo)
-    // ==============================================
-    {
-      nome: "adedonha",
-      descricao: "Adedonha",
-      async executar({ sock, idChat }) {
-        const jogo = getJogo(idChat);
-        if (jogo && jogo.tipo === "adedonha") return;
+// ==============================================
+// 🔠 ADEDONHA (inicia jogo)
+// ==============================================
+{
+  nome: "adedonha",
+  descricao: "Adedonha",
+  async executar({ sock, idChat }) {
+    const jogo = getJogo(idChat);
+    if (jogo && jogo.tipo === "adedonha") return;
 
-        const letras = "ABCDEFGHIJLMNOPQRSTUV".split("");
-        const letra = letras[Math.floor(Math.random() * letras.length)];
+    const letras = "ABCDEFGHIJLMNOPQRSTUV".split("");
+    const letra = letras[Math.floor(Math.random() * letras.length)];
 
-        novoJogo(idChat, "adedonha", {
-          letra,
-          palavras: {},
-          jids: {},
-          usadas: [],
-          fim: Date.now() + 20000
+    novoJogo(idChat, "adedonha", {
+      letra,
+      palavras: {},
+      jids: {},
+      usadas: [],
+      fim: Date.now() + 20000
+    });
+
+    await sock.sendMessage(idChat, {
+      text:
+        `🔠 *ADEDONHA!*\n\n` +
+        `> Letra: *${letra}*\n` +
+        `> ⏰ Você tem *20 segundos*!\n\n` +
+        `> Mande palavras que começam com *${letra}*`
+    });
+
+    setTimeout(async () => {
+      const jogoFinal = getJogo(idChat);
+      if (!jogoFinal || jogoFinal.tipo !== "adedonha" || jogoFinal.letra !== letra) return;
+
+      const vencedores = Object.entries(jogoFinal.palavras || {}).sort((a, b) => b[1] - a[1]);
+      encerrarJogo(idChat);
+
+      if (!vencedores.length) {
+        return sock.sendMessage(idChat, {
+          text: `⏰ *Tempo esgotado!*\n\n> Ninguém participou... 😢`
         });
-
-        await sock.sendMessage(idChat, {
-          text:
-            `🔠 *ADEDONHA!*\n\n` +
-            `> Letra: *${letra}*\n` +
-            `> ⏰ Você tem *20 segundos*!\n\n` +
-            `> Mande palavras que começam com *${letra}*`
-        });
-
-        setTimeout(async () => {
-          const jogoFinal = getJogo(idChat);
-          if (!jogoFinal || jogoFinal.tipo !== "adedonha" || jogoFinal.letra !== letra) return;
-
-          const vencedores = Object.entries(jogoFinal.palavras || {}).sort((a, b) => b[1] - a[1]);
-          encerrarJogo(idChat);
-
-          if (!vencedores.length) {
-            return sock.sendMessage(idChat, {
-              text: `⏰ *Tempo esgotado!*\n\n> Ninguém participou... 😢`
-            });
-          }
-
-          let txt = `⏰ *FIM DO TEMPO!*\n\n> Letra: *${letra}*\n\n`;
-          const mentions = [];
-
-          for (const [num, qtd] of vencedores.slice(0, 3)) {
-            const premio = Math.min(600, 300 + qtd * 30);
-            darMoedas(num, premio);
-            // 👇 Usa o JID salvo no jogo
-            const jid = jogoFinal.jids[num] || `${num}@s.whatsapp.net`;
-            mentions.push(jid);
-            txt += `┃ @${num} — *${qtd}* palavras → 💰 +${premio}\n`;
-          }
-
-          await sock.sendMessage(idChat, { text: txt, mentions });
-        }, 20000);
       }
-    },
+
+      let txt = `⏰ *FIM DO TEMPO!*\n\n> Letra: *${letra}*\n\n`;
+      const mentions = [];
+
+      for (const [num, qtd] of vencedores.slice(0, 3)) {
+        const premio = Math.min(600, 300 + qtd * 30);
+        darMoedas(num, premio);
+        const jid = jogoFinal.jids[num] || `${num}@s.whatsapp.net`;
+        mentions.push(jid);
+        txt += `┃ @${num} — *${qtd}* palavras → 💰 +${premio}\n`;
+      }
+
+      await sock.sendMessage(idChat, { text: txt, mentions });
+    }, 20000);
+  }
+},
 
     // ==============================================
     // ❌ VELHA
@@ -682,7 +774,6 @@ module.exports = {
             return sock.sendMessage(idChat, { text: "❌ Posição ocupada!" });
           }
 
-          // Salva jid
           jogo.jids = jogo.jids || {};
           jogo.jids[num] = remetente;
 
@@ -847,6 +938,7 @@ module.exports = {
                 if (jogo.tab[i][bj] === "⬜") { jogo.tab[i][bj] = "🟡"; break; }
               }
             }
+
             venc = verificarConecta4(jogo.tab);
             if (venc) {
               encerrarJogo(idChat);
