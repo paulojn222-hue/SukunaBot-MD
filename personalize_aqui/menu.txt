@@ -1,40 +1,39 @@
-*👋 {SAUDACAO} {user}, seja bem vindo (a) ao meu menu de comandos ✨️*
+*🩸 ^_^ {SAUDACAO} {user}, aqui está meu menu com os comandos principais!*
 
-᥀───·ٜ۬･❄️*𝗜𝗡𝗙𝗢𝗥𝗠𝗔𝗖̧𝗢̃𝗘𝗦*❄️·ٜ۬･───୭
-ᯢ🔮 ◗ *𝗕𝗼𝘁* {botName}
-ᯢ🔮 ◗ *𝗨𝘀𝘂𝗮́𝗿𝗶𝗼* {user}
-ᯢ🔮 ◗ *𝗣𝗿𝗲𝗳𝗶𝘅𝗼* {prefix}
-ᯢ🔮 ◗ *𝗗𝗼𝗻𝗼* {ownerName}
-ᯢ🔮 ◗ *𝗗𝗮𝘁𝗮 𝗲 𝗛𝗼𝗿𝗮* {date} {time}
-ᯢ🔮 ◗ *𝗡𝘂́𝗺𝗲𝗿𝗼 𝗱𝗼𝗻𝗼* {ownerNumber}
-ᯢ🔮 ◗ *𝗖𝗼𝗺𝗮𝗻𝗱𝗼𝘀* {quantia_comandos}
+╭﹕︵‿︵‿୨🏮 *DETALHES* ୧‿︵‿︵
+᥀·࣭࣪̇˖⛩️◗ *𝗨𝘀𝘂𝗮́𝗿𝗶𝗼:* {user}
+᥀·࣭࣪̇˖⛩️◗ *𝗗𝗼𝗻𝗼:* {ownerName}
+᥀·࣭࣪̇˖⛩️◗ *𝗕𝗼𝘁:* {botName}
+᥀·࣭࣪̇˖⛩️◗ *𝗣𝗿𝗲𝗳𝗶𝘅𝗼:* {prefix}
+᥀·࣭࣪̇˖⛩️◗ *𝗡𝘂́𝗺𝗲𝗿𝗼 𝗱𝗼𝗻𝗼:* {ownerNumber}
+᥀·࣭࣪̇˖⛩️◗ *𝗗𝗮𝘁𝗮 𝗲 𝗛𝗼𝗿𝗮:* {date} {time}
+᥀·࣭࣪̇˖⛩️◗ *𝗖𝗼𝗺𝗮𝗻𝗱𝗼𝘀:* {quantia_comandos}
 
-»»————💫 *𝗠𝗘𝗡𝗨𝗦*💫————««
-•.̇𖥨֗❄️⭟!Menuadm
-•.̇𖥨֗❄️⭟!Menudono
-•.̇𖥨֗❄️⭟!Menubaixar
-•.̇𖥨֗❄️⭟!Menufig
-•.̇𖥨֗❄️⭟!Menuvip
-•.̇𖥨֗❄️⭟!Menugame
-•.̇𖥨֗❄️⭟!Menurpg
+╭﹕──── ୨📜 *𝗠𝗘𝗡𝗨𝗦* ୧ ────
+•.̇𖠵⃯🏮⭟!Menuadm
+•.̇𖠵⃯🏮⭟!Menudono
+•.̇𖠵⃯🏮⭟!Menubaixar
+•.̇𖠵⃯🏮⭟!Menufig
+•.̇𖠵⃯🏮⭟!Menuvip
+•.̇𖠵⃯🏮⭟!Menugame
+•.̇𖠵⃯🏮⭟!!Menurpg
 
-༘🔮⸻»»𝗣𝗥𝗜𝗡𝗖𝗜𝗣𝗔𝗜𝗦««⸻🔮༘
-┆▒⃝꙰💧!alugar
-┆▒⃝꙰💧!ping
-┆▒⃝꙰💧!infobot
-┆▒⃝꙰💧!traduzir
-┆▒⃝꙰💧!clima
-┆▒⃝꙰💧!dono
-┆▒⃝꙰💧!criador
-┆▒⃝꙰💧!versiculo
-┆▒⃝꙰💧!cantadas
-┆▒⃝꙰💧!contar_letras
-┆▒⃝꙰💧!perfil
-┆▒⃝꙰💧!afk
-┆▒⃝꙰💧!fatos
-┆▒⃝꙰💧!adms
-┆▒⃝꙰💧!middle
-┆▒⃝꙰💧!uptime
-┆▒⃝꙰💧!calcular
-┆▒⃝꙰💧!gpt
-»»————✨️{botName}✨️————««
+──── ୨💫 *𝗠𝗘𝗠𝗕𝗥𝗢𝗦* ୧ ────
+⏤͟͟͞͞🀄!ping
+⏤͟͟͞͞🀄!alugar
+⏤͟͟͞͞🀄!dono
+⏤͟͟͞͞🀄!criador
+⏤͟͟͞͞🀄!infobot
+⏤͟͟͞͞🀄!traduzir
+⏤͟͟͞͞🀄!clima
+⏤͟͟͞͞🀄!versiculo
+⏤͟͟͞͞🀄!cantadas
+⏤͟͟͞͞🀄!contar_letras
+⏤͟͟͞͞🀄!perfil
+⏤͟͟͞͞🀄!afk
+⏤͟͟͞͞🀄!planos
+⏤͟͟͞͞🀄!middle
+⏤͟͟͞͞🀄!uptime
+⏤͟͟͞͞🀄!calcular
+⏤͟͟͞͞🀄!gpt
+﹌﹌﹌﹌﹌{botName}﹌﹌﹌﹌﹌
