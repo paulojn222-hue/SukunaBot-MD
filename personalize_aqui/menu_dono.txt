@@ -1,0 +1,60 @@
+᳝᳝👑 ᏟϴΝͲᎡϴᏞᎬ Ꭼ ᏀᎬՏͲÃϴ
+•.̇𖠵⃯❄️!nuke
+•.̇𖠵⃯❄️!pv
+•.̇𖠵⃯❄️!editar_menu
+•.̇𖠵⃯❄️!subdono
+•.̇𖠵⃯❄️!rmsub
+•.̇𖠵⃯❄️!subdonos
+•.̇𖠵⃯❄️!rg_prefixo
+•.̇𖠵⃯❄️!setchat
+•.̇𖠵⃯❄️!setchannel
+•.̇𖠵⃯❄️!channel
+•.̇𖠵⃯❄️!uptime
+•.̇𖠵⃯❄️!broadcast
+•.̇𖠵⃯❄️!foto_erro
+•.̇𖠵⃯❄️!view
+•.̇𖠵⃯❄️!apikey
+•.̇𖠵⃯❄️!reiniciar
+
+᳝᳝🩵 ҒᏆᏀႮᎡᏆΝᎻᎪՏ Ꭼ ᏟϴᎷᎪΝᎠϴՏ
+•.̇𖠵⃯🩵!figcmd
+•.̇𖠵⃯🩵!delcmdfig
+•.̇𖠵⃯🩵!listacmdfig
+•.̇𖠵⃯🩵!addcmdp
+•.̇𖠵⃯🩵!rmcmdp
+•.̇𖠵⃯🩵!listacmdp
+•.̇𖠵⃯🩵!setmenu
+•.̇𖠵⃯🩵!rm_midiamenu
+•.̇𖠵⃯🩵!menudono
+
+᳝᳝❄️ ᎪᏞႮᏀႮᎬᏞՏ
+•.̇𖠵⃯🌧!aluguelglobal
+•.̇𖠵⃯🌧!add_aluguel
+•.̇𖠵⃯🌧!rmaluguel
+•.̇𖠵⃯🌧!alugueis
+
+᳝᳝🩵 ᏀᎡႮᏢϴՏ
+•.̇𖠵⃯💧!grupoid
+•.̇𖠵⃯💧!grupos
+•.̇𖠵⃯💧!entrar
+•.̇𖠵⃯💧!kitar
+•.̇𖠵⃯💧!sair_todos
+•.̇𖠵⃯💧!entrar_todos
+•.̇𖠵⃯💧!bloquear_gp
+•.̇𖠵⃯💧!desbloquear_gp
+•.̇𖠵⃯💧!listagp_bloq
+
+᳝᳝❄️ ᏟϴΝҒᏆᏀႮᎡᎪᏟ̧Ãϴ
+•.̇𖠵⃯❄️!setnome
+•.̇𖠵⃯❄️!setdono
+•.̇𖠵⃯❄️!setlid
+•.̇𖠵⃯❄️!meulid
+
+᳝᳝🩵 ՏᎬᏀႮᎡᎪΝᏟ̧Ꭺ Ꭼ ᏴᏞϴႮᎬᏆϴՏ
+•.̇𖠵⃯🌧!ban_user
+•.̇𖠵⃯🌧!unban_user
+•.̇𖠵⃯🌧!listaban
+•.̇𖠵⃯🌧!antispam
+•.̇𖠵⃯🌧!bloquear_cmd
+•.̇𖠵⃯🌧!liberar_cmd
+•.̇𖠵⃯🌧!panic

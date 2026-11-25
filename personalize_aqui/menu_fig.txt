@@ -1,0 +1,34 @@
+᳝᳝🖼️ ҒᎪᏃᎬᎡ ҒᏆᏀႮᎡᏆΝᎻᎪ
+•.̇𖠵⃯❄️!s
+•.̇𖠵⃯❄️!s2 (banner)
+
+᳝᳝🔄 ᏟϴΝᏙᎬᎡͲᎬᎡ
+•.̇𖠵⃯🩵!toimg (figurinha → imagem)
+
+᳝᳝✏️ ᎬᎠᏆͲᎪᎡ
+•.̇𖠵⃯❄️!rename <texto>
+
+᳝᳝🎨 ͲᎬХͲϴ ᎬᎷ ҒᏆᏀႮᎡᏆΝᎻᎪ
+•.̇𖠵⃯🩵!attp <texto>
+•.̇𖠵⃯🩵!attp2 <texto>
+•.̇𖠵⃯🩵!ttp_white <texto>
+•.̇𖠵⃯🩵!ttp_brat <texto>
+•.̇𖠵⃯🩵!attp_white <texto>
+•.̇𖠵⃯🩵!attp_brat <texto>
+•.̇𖠵⃯🩵!brat <texto>
+
+᳝᳝🎬 ͲᎬХͲϴ ᎬᎷ ᏙᏆᎠᎬϴ
+•.̇𖠵⃯❄️!attp_white_video <texto>
+
+᳝᳝⚙️ ᏟϴΝҒᏆᏀႮᎡᎪᏟ̧Ãϴ
+•.̇𖠵⃯🩵!autofig on/off
+
+᳝᳝🎨 ᎬҒᎬᏆͲϴՏ ᎠᎬ ҒᏆᏀႮᎡᏆΝᎻᎪ
+•.̇𖠵⃯❄️!figespelhar (espelha)
+•.̇𖠵⃯❄️!figinverter (negativo)
+•.̇𖠵⃯❄️!figpb (preto e branco)
+•.̇𖠵⃯❄️!figborrar (desfoque)
+•.̇𖠵⃯❄️!figpixel (pixelado)
+•.̇𖠵⃯❄️!figvelocidade <1-3>
+•.̇𖠵⃯❄️!figrotacionar <90|180|270>
+•.̇𖠵⃯❄️!figredimensionar <128|256|512>

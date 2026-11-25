@@ -1,0 +1,25 @@
+»»———— 💎 *SISTEMA VIP* ————««
+┆▒⃝꙰💎!listavip
+┆▒⃝꙰💎!vip
+
+»»———— 🤖 *IA E CONSULTAS* ————««
+┆▒⃝꙰🪻!axis <pergunta>
+┆▒⃝꙰🪻!cep 01310930
+┆▒⃝꙰🪻!sora <descrição>
+┆▒⃝꙰🪻!g1
+
+»»———— 🌎 *CONSULTAS* ————««
+┆▒⃝꙰🌎!info_ddd
+┆▒⃝꙰🌎!info_ddi
+
+»»———— 📝 *ANOTAÇÕES* ————««
+┆▒⃝꙰💧!anotar
+┆▒⃝꙰💧!anotações
+┆▒⃝꙰💧!rm_anotação <id>
+
+»»———— 🌀 *SISTEMA DE AURA* ————««
+┆▒⃝꙰🔮!aura
+
+»»———— 🎂 *IDADE* ————««
+┆▒⃝꙰🎂!idade <dia/mês/ano>
+╞════════𖠁🪄𖠁════════╡

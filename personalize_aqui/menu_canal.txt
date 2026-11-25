@@ -1,0 +1,6 @@
+✨ *MENU DO CANAL* ✨
+
+🖼️ *{PREFIXO}s* - Cria figurinha de foto/vídeo
+🎨 *{PREFIXO}attp* <texto> - Figurinha de texto
+🖼️ *{PREFIXO}toimg* - Figurinha vira foto
+🎬 *{PREFIXO}brat* <texto> - Figurinha estilo Brat
