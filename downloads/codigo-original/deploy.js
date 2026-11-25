@@ -122,7 +122,7 @@ copiarRecursivo(PASTA_DIST, PASTA_DEPLOY);
 function copiarOriginais(origem, destino) {
   const protegidos = [
     ".git", "auth", "dados", "node_modules", "temp_*",
-    "config.js", "package.json", "personalize_aqui", "downloads"
+    "personalize_aqui", "downloads"
   ];
 
   if (!fs.existsSync(origem)) return;
