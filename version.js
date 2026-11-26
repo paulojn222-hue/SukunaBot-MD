@@ -1,6 +1,6 @@
 module.exports = {
-  versao: "2.0.5",
-  mensagem: "🤖 Correções no index, novos comandos de diversão e melhorias.",
-  data: "2026-11-14",
-  urlZip: "https://github.com/paulojn222-hue/SukunaBot-MD/raw/main/downloads/hoshino-atualizacao.zip"
+  versao: "2.0.6",
+  mensagem: "🏓 Melhorias no sistema e ajustes no comando ping.",
+  data: "2026-11-26",
+  urlZip: "https://github.com/paulojn222-hue/SukunaBot-MD/raw/main/downloads/hoshino-atualizacao-completa.zip"
 };
